@@ -85,6 +85,8 @@ export default class InteractionContext{
 
 
     keywordClick(point_info, e){
+        if (point_info.delButton) return;
+
         const is_ctrl = isPlatformCtrlClick(e);
 
         let clicked_keyword_index = point_info.kwdIndex;
@@ -160,12 +162,14 @@ export default class InteractionContext{
             kwdIndex: -1,
             offset: 1,
             hoverKwdElement: null,
-            outside: 0
+            outside: 0,
+            delButton: false
         };
         if (this.component.value.length === 0) return res;
 
         let target = e.target;
         if (nodeHasClass(target, 'ImsKeywordBox-keyword-delete')){
+            res.delButton = true;
             target = getClosestNodeByClass(target, 'ImsKeywordBox-keyword');
             if (!target) target = e.target;
         }
