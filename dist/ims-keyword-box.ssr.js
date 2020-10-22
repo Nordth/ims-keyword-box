@@ -105,6 +105,85 @@ function _objectSpread2(target) {
   return target;
 }
 
+function _inherits(subClass, superClass) {
+  if (typeof superClass !== "function" && superClass !== null) {
+    throw new TypeError("Super expression must either be null or a function");
+  }
+
+  subClass.prototype = Object.create(superClass && superClass.prototype, {
+    constructor: {
+      value: subClass,
+      writable: true,
+      configurable: true
+    }
+  });
+  if (superClass) _setPrototypeOf(subClass, superClass);
+}
+
+function _getPrototypeOf(o) {
+  _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+    return o.__proto__ || Object.getPrototypeOf(o);
+  };
+  return _getPrototypeOf(o);
+}
+
+function _setPrototypeOf(o, p) {
+  _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+    o.__proto__ = p;
+    return o;
+  };
+
+  return _setPrototypeOf(o, p);
+}
+
+function _isNativeReflectConstruct() {
+  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+  if (Reflect.construct.sham) return false;
+  if (typeof Proxy === "function") return true;
+
+  try {
+    Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function _assertThisInitialized(self) {
+  if (self === void 0) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return self;
+}
+
+function _possibleConstructorReturn(self, call) {
+  if (call && (typeof call === "object" || typeof call === "function")) {
+    return call;
+  }
+
+  return _assertThisInitialized(self);
+}
+
+function _createSuper(Derived) {
+  var hasNativeReflectConstruct = _isNativeReflectConstruct();
+
+  return function _createSuperInternal() {
+    var Super = _getPrototypeOf(Derived),
+        result;
+
+    if (hasNativeReflectConstruct) {
+      var NewTarget = _getPrototypeOf(this).constructor;
+
+      result = Reflect.construct(Super, arguments, NewTarget);
+    } else {
+      result = Super.apply(this, arguments);
+    }
+
+    return _possibleConstructorReturn(this, result);
+  };
+}
+
 function _toConsumableArray(arr) {
   return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
 }
@@ -646,7 +725,7 @@ function isPlatformCtrlClick(e) {
         outside: 0,
         delButton: false
       };
-      if (this.component.value.length === 0) return res;
+      if (!this.component.value || this.component.value.length === 0) return res;
       var target = e.target;
 
       if (nodeHasClass(target, 'ImsKeywordBox-keyword-delete')) {
@@ -683,7 +762,7 @@ function isPlatformCtrlClick(e) {
     key: "_findMousePointInfoByCoords",
     value: function _findMousePointInfoByCoords(x, y) {
       var res = {
-        kwdIndex: this.component.value.length - 1,
+        kwdIndex: this.component.value ? this.component.value.length - 1 : -1,
         offset: 1,
         hoverKwdElement: null,
         outside: 1
@@ -720,7 +799,7 @@ function isPlatformCtrlClick(e) {
     key: "_findKeywordEdgeIndex",
     value: function _findKeywordEdgeIndex(line, which, canvas_top, line_height) {
       var begin = 0;
-      var end = this.component.value.length - 1;
+      var end = this.component.value ? this.component.value.length - 1 : -1;
 
       while (begin <= end) {
         var middle = Math.floor((end + begin) / 2);
@@ -770,7 +849,7 @@ function isPlatformCtrlClick(e) {
   }, {
     key: "_getLastKeywordBounds",
     value: function _getLastKeywordBounds() {
-      return this._getKeywordBounds(this.component.value.length - 1);
+      return this._getKeywordBounds(this.component.value ? this.component.value.length - 1 : -1);
     }
   }, {
     key: "_getFirstKeywordBounds",
@@ -867,14 +946,16 @@ function isPlatformCtrlClick(e) {
     value: function deleteDraggingMyKeywords() {
       var emit = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
       var cur_value = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
-      var new_value = cur_value !== undefined ? cur_value : this.component.value;
+      cur_value = cur_value !== undefined ? cur_value : this.component.value;
+      if (!cur_value) cur_value = [];
+      var new_value = cur_value;
 
       if (this.draggingMyKeywords.length > 0) {
         var first_selected_index = -1;
         new_value = [];
 
-        for (var index = 0; index < this.component.value.length; index++) {
-          var v = this.component.value[index];
+        for (var index = 0; index < cur_value.length; index++) {
+          var v = cur_value[index];
 
           if (this.draggingMyKeywords.indexOf(v) >= 0) {
             if (first_selected_index === -1) first_selected_index = index;
@@ -1312,7 +1393,112 @@ var __vue_is_functional_template__ = false;
 var __vue_component__ = /*#__PURE__*/normalizeComponent({
   render: __vue_render__,
   staticRenderFns: __vue_staticRenderFns__
-}, __vue_inject_styles__, __vue_script__, __vue_scope_id__, __vue_is_functional_template__, __vue_module_identifier__, false, undefined, createInjectorSSR, undefined);var MUTE_NATIVE_EVENTS_DELAY = 100;
+}, __vue_inject_styles__, __vue_script__, __vue_scope_id__, __vue_is_functional_template__, __vue_module_identifier__, false, undefined, createInjectorSSR, undefined);var HistoryController = /*#__PURE__*/function () {
+  function HistoryController() {
+    _classCallCheck(this, HistoryController);
+  }
+
+  _createClass(HistoryController, [{
+    key: "init",
+
+    /**
+     * Init
+     * @param component
+     * @param value
+     */
+    value: function init(component, value) {}
+    /***
+     * Add new state to history
+     * @param value - adding keywords
+     */
+
+  }, {
+    key: "push",
+    value: function push(value) {}
+    /**
+     * Undo
+     */
+
+  }, {
+    key: "undo",
+    value: function undo() {}
+    /**
+     * Redo
+     */
+
+  }, {
+    key: "redo",
+    value: function redo() {}
+  }]);
+
+  return HistoryController;
+}();var StackHistoryController = /*#__PURE__*/function (_HistoryController) {
+  _inherits(StackHistoryController, _HistoryController);
+
+  var _super = _createSuper(StackHistoryController);
+
+  function StackHistoryController() {
+    var _this;
+
+    _classCallCheck(this, StackHistoryController);
+
+    _this = _super.call(this);
+    _this.history = [];
+    _this.pointer = 0;
+    return _this;
+  }
+  /**
+   * Init
+   * @param component
+   * @param value
+   */
+
+
+  _createClass(StackHistoryController, [{
+    key: "init",
+    value: function init(component, value) {
+      this.component = component;
+      this.history = [value];
+    }
+    /***
+     * Add new state to history
+     * @param value - adding keywords
+     */
+
+  }, {
+    key: "push",
+    value: function push(value) {
+      this.history = [value].concat(_toConsumableArray(this.history.slice(this.pointer)));
+      this.pointer = 0;
+    }
+    /**
+     * Undo
+     */
+
+  }, {
+    key: "undo",
+    value: function undo() {
+      if (this.pointer < this.history.length - 1) {
+        this.pointer++;
+        this.component.emitValue(this.history[this.pointer], false);
+      }
+    }
+    /**
+     * Redo
+     */
+
+  }, {
+    key: "redo",
+    value: function redo() {
+      if (this.pointer > 0) {
+        this.pointer--;
+        this.component.emitValue(this.history[this.pointer], false);
+      }
+    }
+  }]);
+
+  return StackHistoryController;
+}(HistoryController);var MUTE_NATIVE_EVENTS_DELAY = 100;
 var DUPLICATE_REMOVE_HIGHLIGHT_TIME = 600;
 var DUPLICATE_REMOVE_HIGHLIGHT_CHECK = 200;
 var script$1 = {
@@ -1359,6 +1545,12 @@ var script$1 = {
     customizeMultiKeywordDraggingCanvas: {
       type: Function,
       default: null
+    },
+    historyController: {
+      type: Object,
+      default: function _default() {
+        return new StackHistoryController();
+      }
     }
   },
   data: function data() {
@@ -1413,14 +1605,17 @@ var script$1 = {
      */
     deleteSelectedKeywords: function deleteSelectedKeywords() {
       var emit = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
-      var new_value = this.value;
+      var cur_value = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
+      cur_value = cur_value !== undefined ? cur_value : this.value;
+      if (!cur_value) cur_value = [];
+      var new_value = cur_value;
 
       if (this.selectedKeywords.count > 0) {
         var first_selected_index = -1;
         new_value = [];
 
-        for (var index = 0; index < this.value.length; index++) {
-          var v = this.value[index];
+        for (var index = 0; index < cur_value.length; index++) {
+          var v = cur_value[index];
 
           if (this.selectedKeywords.isSelected(v)) {
             if (first_selected_index === -1) first_selected_index = index;
@@ -1429,7 +1624,7 @@ var script$1 = {
 
         this.selectedKeywords.clear();
         this.cursorPosition = first_selected_index;
-        if (emit) this._emitValue(new_value);
+        if (emit) this.emitValue(new_value);
       }
 
       return new_value;
@@ -1441,11 +1636,10 @@ var script$1 = {
     eraseEofCommand: function eraseEofCommand() {
       var remove_from = this.selectedKeywords.count > 0 ? this.selectedKeywords.getFirstSelectedIndex() : this.cursorPosition;
       if (remove_from < 0) remove_from = 0;
-      var new_val = this.value.slice(0, remove_from);
+      var new_val = this.value ? this.value.slice(0, remove_from) : [];
       this.cursorPosition = new_val.length;
       this.selectedKeywords.clear();
-
-      this._emitValue(new_val);
+      this.emitValue(new_val);
     },
 
     /**
@@ -1454,8 +1648,7 @@ var script$1 = {
     clearCommand: function clearCommand() {
       this.selectedKeywords.clear();
       this.cursorPosition = -1;
-
-      this._emitValue([]);
+      this.emitValue([]);
     },
 
     /**
@@ -1464,13 +1657,11 @@ var script$1 = {
      */
     deleteWordFromCursor: function deleteWordFromCursor(dir) {
       if (this.cursorPosition >= 0) {
-        var new_val = _toConsumableArray(this.value);
-
+        var new_val = this.value ? _toConsumableArray(this.value) : [];
         new_val.splice(this.cursorPosition + dir, 1);
         this.cursorPosition = Math.max(this.cursorPosition + dir, 0);
         this.selectedKeywords.clear();
-
-        this._emitValue(new_val);
+        this.emitValue(new_val);
       }
     },
 
@@ -1640,8 +1831,7 @@ var script$1 = {
         var new_value = _toConsumableArray(cur_value);
 
         new_value.splice.apply(new_value, [cursor, 0].concat(split_norm));
-
-        this._emitValue(new_value);
+        this.emitValue(new_value);
       }
 
       if (duplicated) {
@@ -1776,11 +1966,11 @@ var script$1 = {
 
       var text = e.dataTransfer.getData("text/plain");
       e.preventDefault();
-      var cur_value = this.value;
+      var cur_value = this.value ? this.value : [];
       var drop_anchor = cur_value[this.dragKeywordPosition];
 
       if (this.editorPosition >= 0) {
-        if (this.editorInstead && cur_value) {
+        if (this.editorInstead) {
           cur_value = _toConsumableArray(cur_value);
           cur_value.splice(this.editorPosition, 1);
         }
@@ -1801,14 +1991,14 @@ var script$1 = {
           var sect_count = 0;
           var sect_anchor_found = false;
 
-          for (var i = 0; i < this.value.length; i++) {
-            if (dragging_keywords_set.has(this.value[i])) {
+          for (var i = 0; i < cur_value.length; i++) {
+            if (dragging_keywords_set.has(cur_value[i])) {
               if (cur_sect_begin === null) {
                 cur_sect_begin = i;
                 sect_count++;
               }
 
-              if (!sect_anchor_found && this.value[i] === drop_anchor) {
+              if (!sect_anchor_found && cur_value[i] === drop_anchor) {
                 this.dragKeywordPosition = cur_sect_begin - 1;
                 this.dragKeywordIsBegin = false;
                 drop_anchor = this.dragKeywordPosition >= 0 ? this.value[this.dragKeywordPosition] : null;
@@ -1845,6 +2035,7 @@ var script$1 = {
       var print_key = getCharacterFromKeyboardEvent(e);
       var can_open_editor = !!print_key;
       var is_ctrl = isPlatformCtrlClick(e);
+      var cur_value = this.value ? this.value : [];
 
       switch (e.key) {
         case 'Shift':
@@ -1920,12 +2111,12 @@ var script$1 = {
                   this.cursorPosition = -1;
                 }
               } else {
-                this.cursorPosition = Math.min(Math.max(this.cursorPosition + _dir, 0), this.value.length);
+                this.cursorPosition = Math.min(Math.max(this.cursorPosition + _dir, 0), cur_value.length);
               }
 
               handled = true;
             } else {
-              if (_dir < 0 && this.cursorPosition === 0 || _dir > 0 && this.cursorPosition === this.value.length) {
+              if (_dir < 0 && this.cursorPosition === 0 || _dir > 0 && this.cursorPosition === cur_value.length) {
                 handled = true;
               }
             }
@@ -1946,7 +2137,7 @@ var script$1 = {
         case 'End':
         case 'Home':
           {
-            var to_pos = e.key === 'Home' ? 0 : this.value.length;
+            var to_pos = e.key === 'Home' ? 0 : cur_value.length;
 
             if (e.shiftKey) {
               var act_ind = this.selectedKeywords.count > 0 ? this.selectedKeywords.lastActiveKeywordIndex : this.cursorPosition;
@@ -1994,10 +2185,10 @@ var script$1 = {
             if (this.$refs['textArea']) this.$refs['textArea'].value = '';
             return; // Will be handled by _onTextareaPaste
           } else if (e.key === "Redo" || e_code === 'KeyY' && is_ctrl || e_code === 'KeyZ' && is_ctrl && e.shiftKey) {
-            this.$emit('redo');
+            if (this.historyController) this.historyController.redo();
             handled = true;
           } else if (e.key === "Undo" || e_code === 'KeyZ' && is_ctrl) {
-            this.$emit('undo');
+            if (this.historyController) this.historyController.undo();
             handled = true;
           } else if (e_code === 'KeyA' && is_ctrl) {
             this.selectAll();
@@ -2037,17 +2228,17 @@ var script$1 = {
           });
         });
       } else if (can_open_editor) {
-        var cur_value = this.value;
+        var _cur_value = this.value ? this.value : [];
 
         if (print_key && this.selectedKeywords.count > 0) {
-          cur_value = this.deleteSelectedKeywords();
+          _cur_value = this.deleteSelectedKeywords();
         }
 
         var open_editor_args = {
           keyDownEvent: e
         };
 
-        if (print_key && this.cursorPosition === cur_value.length && cur_value.length > 0) {
+        if (print_key && this.cursorPosition === _cur_value.length && _cur_value.length > 0) {
           if (!this.splittingRegexp || !this.splittingRegexp.test(print_key)) {
             open_editor_args.appendSeparator = this.separator;
           }
@@ -2092,10 +2283,9 @@ var script$1 = {
     },
     _onTextareaInput: function _onTextareaInput(e) {
       e.preventDefault();
-      var cur_value = this.value;
 
       if (this.selectedKeywords.count > 0) {
-        cur_value = this.deleteSelectedKeywords();
+        this.deleteSelectedKeywords();
       }
 
       this.openEditor({
@@ -2108,8 +2298,7 @@ var script$1 = {
       var new_val = _toConsumableArray(this.value);
 
       new_val.splice(keyword_index, 1);
-
-      this._emitValue(new_val);
+      this.emitValue(new_val);
     },
     openEditor: function openEditor(args) {
       var _this10 = this;
@@ -2216,7 +2405,7 @@ var script$1 = {
     _getKeywordClasses: function _getKeywordClasses(keyword, keyword_index) {
       var is_regular_cursor = this.dragKeywordPosition === null && this.focused;
       var is_cursor_before = is_regular_cursor && this.cursorPositionRaw === keyword_index && !this.cursorPositionAfter || this.dragKeywordPosition === keyword_index && this.dragKeywordIsBegin || this.dragKeywordPosition === -1 && keyword_index === 0;
-      var is_cursor_after = is_regular_cursor && this.cursorPositionRaw === keyword_index + 1 && (keyword_index === this.value.length - 1 || this.cursorPositionAfter) || this.dragKeywordPosition === keyword_index && !this.dragKeywordIsBegin;
+      var is_cursor_after = is_regular_cursor && this.cursorPositionRaw === keyword_index + 1 && (this.value && keyword_index === this.value.length - 1 || this.cursorPositionAfter) || this.dragKeywordPosition === keyword_index && !this.dragKeywordIsBegin;
       var is_duplicated = this.highlightDuplicated && this.highlightDuplicated.hasOwnProperty(keyword);
       return _objectSpread2({
         'state-cursor-before': is_cursor_before,
@@ -2225,7 +2414,13 @@ var script$1 = {
         'state-duplicate': is_duplicated
       }, this.getKeywordClasses ? this.getKeywordClasses(keyword, keyword_index) : {});
     },
-    _emitValue: function _emitValue(value) {
+    emitValue: function emitValue(value) {
+      var record = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+
+      if (record && this.historyController) {
+        this.historyController.push(value);
+      }
+
       this.$emit(this.emitValueEvent, value);
     },
     _editorCommit: function _editorCommit() {
@@ -2270,9 +2465,12 @@ var script$1 = {
       }
     }
   },
+  created: function created() {
+    if (this.historyController) this.historyController.init(this, this.value);
+  },
   mounted: function mounted() {
     this.$refs['scroller'].scrollTop = this.scrollY;
-    this.cursorPosition = this.value.length;
+    this.cursorPosition = this.value ? this.value.length : 0;
   },
   destroyed: function destroyed() {
     if (this.interactionContext) this.interactionContext.destroy();
@@ -2282,6 +2480,9 @@ var script$1 = {
     value: function value() {
       this.selectedKeywords.setValue(this.value);
       if (this.interactionContext) this.interactionContext.invalidateCache();
+    },
+    historyController: function historyController() {
+      if (this.historyController) this.historyController.init(this, this.value);
     }
   }
 };/* script */
@@ -2351,7 +2552,7 @@ var __vue_staticRenderFns__$1 = [];
 
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-b8d2f1ec_0", {
+  inject("data-v-7cdb378f_0", {
     source: ".ImsKeywordBox{border:1px solid #ccc;border-radius:4px;overflow:auto;position:relative;padding:0 6px;cursor:text}.ImsKeywordBox-scroller{height:100%;overflow-x:hidden;position:relative}.ImsKeywordBox-canvas{display:block;padding:4px 4px 4px 4px;line-height:2em;position:relative;user-select:none;outline:0;min-height:100%;box-sizing:border-box}.ImsKeywordBox-keyword-wrapper{white-space:nowrap;display:inline-block}.ImsKeywordBox-keyword-wrapper.state-highlighted{position:relative}.ImsKeywordBox-keyword-wrapper.state-highlighted>.ImsKeywordBox-keyword{cursor:text}.ImsKeywordBox-keyword-wrapper.state-highlighted:before{content:\"\";position:absolute;width:100%;height:2em;background:#e9e9e9;left:-4px;top:0;padding-left:4px;padding-right:5px}.ImsKeywordBox.state-focus .ImsKeywordBox-scroller>.ImsKeywordBox-canvas .ImsKeywordBox-keyword-wrapper.state-highlighted:before{background:#d7d4f0}.ImsKeywordBox-keyword-wrapper.state-highlighted{background:#faa}.ImsKeywordBox-textarea{width:0;height:0;overflow:hidden;padding:0;display:block;resize:none;position:absolute;background:0 0;border:none;top:0;left:0;color:transparent;outline:0}.ImsKeywordBox-textarea::-moz-selection,.ImsKeywordBox-textarea::selection{color:transparent}.ImsKeywordBox-keyword{padding:2px 7px;border:1px solid #ccc;border-radius:4px;line-height:1.4em;display:inline-block;white-space:nowrap;cursor:default;background-color:rgba(250,250,250,.7);position:relative}.ImsKeywordBox-keyword.state-cursor-after:after,.ImsKeywordBox-keyword.state-cursor-before:after,.ImsKeywordBox-stub.state-cursor-after:after,.ImsKeywordBox-stub.state-cursor-before:after{content:\"\";display:block;width:1px;height:29px;background:#000;position:absolute;top:-2px;pointer-events:none}.ImsKeywordBox-keyword.state-cursor-after.state-cursor-blink:after,.ImsKeywordBox-keyword.state-cursor-before.state-cursor-blink:after,.ImsKeywordBox-stub.state-cursor-after.state-cursor-blink:after,.ImsKeywordBox-stub.state-cursor-before.state-cursor-blink:after{animation:ImsKeywordBox-cursor-blink .5s infinite alternate}.ImsKeywordBox-keyword.state-cursor-before:after,.ImsKeywordBox-stub.state-cursor-before:after{left:-5px}.ImsKeywordBox-keyword.state-cursor-after:after{right:-6px}.ImsKeywordBox-keyword.state-duplicate{background-color:#ff9c9c}.ImsKeywordBox-stub{display:inline-block;width:1px;height:1.4em;position:relative}.ImsKeywordBox-stub.state-cursor-after:after{right:0}.ImsKeywordBox-separator{position:relative;display:inline-block;white-space:pre}.ImsKeywordBox-separator:first-child,.ImsKeywordBox-separator:last-child{color:#aaa}.ImsKeywordBox-line{display:block}.ImsKeywordBox-keyword-delete{background:url(\"data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m18.011 3.8674-6.0106 6.0106-6.0106-6.0106-2.1212 2.1212 6.0106 6.0106-6.0106 6.0106 2.1212 2.1212 6.0106-6.0106 6.0106 6.0106 2.1212-2.1212-6.0106-6.0106 6.0106-6.0106z'/%3E%3C/svg%3E%0A\") no-repeat right center;display:inline-block;width:12px;height:12px;cursor:pointer;background-size:contain;opacity:.5;position:relative;top:1px;margin-left:4px}.ImsKeywordBox-keyword-delete:hover{opacity:1}@keyframes ImsKeywordBox-cursor-blink{0%{opacity:1}49.9%{opacity:1}50%{opacity:0}100%{opacity:0}}",
     map: undefined,
     media: undefined
@@ -2363,7 +2564,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
 var __vue_scope_id__$1 = undefined;
 /* module identifier */
 
-var __vue_module_identifier__$1 = "data-v-b8d2f1ec";
+var __vue_module_identifier__$1 = "data-v-7cdb378f";
 /* functional template */
 
 var __vue_is_functional_template__$1 = false;

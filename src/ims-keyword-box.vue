@@ -105,6 +105,7 @@ import {getCharacterFromKeyboardEvent, getCodeFromKeyboardEvent} from "./utils/k
 import {clipboardCopyPlainText} from "./utils/clipboard-utils";
 import {getClosestNodeByClass, removeNodeFromDOM} from "./utils/dom-element-utils";
 import ImsKeywordBoxEditor from "./ims-keyword-box-editor.vue";
+import StackHistoryController from "./controllers/stack-history-controller";
 
 const MUTE_NATIVE_EVENTS_DELAY = 100;
 const DUPLICATE_REMOVE_HIGHLIGHT_TIME = 600;
@@ -126,6 +127,7 @@ export default {
     handleExceptions: {type: Function, default: null},
     emitValueEvent: {type: String, default: 'input',},
     customizeMultiKeywordDraggingCanvas: { type: Function, default: null },
+    historyController: { type: Object, default: () => new StackHistoryController()},
   },
   data() {
     return {
@@ -176,20 +178,22 @@ export default {
      * @param {boolean} emit - if true, emit new value
      * @returns {string[]} - new value
      */
-    deleteSelectedKeywords(emit = true) {
-      let new_value = this.value;
+    deleteSelectedKeywords(emit = true, cur_value = undefined) {
+      cur_value = cur_value !== undefined ? cur_value : this.value;
+      if (!cur_value) cur_value = [];
+      let new_value = cur_value;
       if (this.selectedKeywords.count > 0) {
         let first_selected_index = -1;
         new_value = [];
-        for (let index = 0; index < this.value.length; index++) {
-          const v = this.value[index];
+        for (let index = 0; index < cur_value.length; index++) {
+          const v = cur_value[index];
           if (this.selectedKeywords.isSelected(v)) {
             if (first_selected_index === -1) first_selected_index = index;
           } else new_value.push(v);
         }
         this.selectedKeywords.clear();
         this.cursorPosition = first_selected_index;
-        if (emit) this._emitValue(new_value);
+        if (emit) this.emitValue(new_value);
       }
       return new_value;
     },
@@ -199,10 +203,10 @@ export default {
     eraseEofCommand() {
       let remove_from = this.selectedKeywords.count > 0 ? this.selectedKeywords.getFirstSelectedIndex() : this.cursorPosition;
       if (remove_from < 0) remove_from = 0;
-      const new_val = this.value.slice(0, remove_from);
+      const new_val = this.value ? this.value.slice(0, remove_from) : [];
       this.cursorPosition = new_val.length;
       this.selectedKeywords.clear();
-      this._emitValue(new_val);
+      this.emitValue(new_val);
     },
     /**
      * Command "clear": Clear value
@@ -210,7 +214,7 @@ export default {
     clearCommand() {
       this.selectedKeywords.clear();
       this.cursorPosition = -1;
-      this._emitValue([]);
+      this.emitValue([]);
     },
     /**
      * Delete one word based on cursor position
@@ -218,11 +222,11 @@ export default {
      */
     deleteWordFromCursor(dir) {
       if (this.cursorPosition >= 0) {
-        const new_val = [...this.value];
+        const new_val = this.value ? [...this.value] : [];
         new_val.splice(this.cursorPosition + dir, 1);
         this.cursorPosition = Math.max(this.cursorPosition + dir, 0);
         this.selectedKeywords.clear();
-        this._emitValue(new_val);
+        this.emitValue(new_val);
       }
     },
     /**
@@ -331,7 +335,7 @@ export default {
       if (split_norm.length !== 0 || cur_value !== this.value) {
         const new_value = [...cur_value];
         new_value.splice(cursor, 0, ...split_norm);
-        this._emitValue(new_value);
+        this.emitValue(new_value);
       }
 
       if (duplicated) {
@@ -447,11 +451,11 @@ export default {
       const text = e.dataTransfer.getData("text/plain");
       e.preventDefault();
 
-      let cur_value = this.value;
+      let cur_value = this.value ? this.value : [];
       let drop_anchor = cur_value[this.dragKeywordPosition];
 
       if (this.editorPosition >= 0){
-        if (this.editorInstead && cur_value){
+        if (this.editorInstead){
           cur_value = [...cur_value];
           cur_value.splice(this.editorPosition, 1);
         }
@@ -472,14 +476,14 @@ export default {
           let cur_sect_front = null;
           let sect_count = 0;
           let sect_anchor_found = false;
-          for (let i = 0; i < this.value.length; i++) {
-            if (dragging_keywords_set.has(this.value[i])) {
+          for (let i = 0; i < cur_value.length; i++) {
+            if (dragging_keywords_set.has(cur_value[i])) {
               if (cur_sect_begin === null) {
                 cur_sect_begin = i;
                 sect_count++;
               }
               cur_sect_front = i;
-              if (!sect_anchor_found && this.value[i] === drop_anchor) {
+              if (!sect_anchor_found && cur_value[i] === drop_anchor) {
                 this.dragKeywordPosition = cur_sect_begin - 1;
                 this.dragKeywordIsBegin = false;
                 drop_anchor = this.dragKeywordPosition >= 0 ? this.value[this.dragKeywordPosition] : null
@@ -519,6 +523,7 @@ export default {
       const print_key = getCharacterFromKeyboardEvent(e);
       let can_open_editor = !!print_key;
       const is_ctrl = isPlatformCtrlClick(e);
+      const cur_value = this.value ? this.value : [];
 
       switch (e.key) {
         case 'Shift':
@@ -588,12 +593,12 @@ export default {
               }
 
             } else {
-              this.cursorPosition = Math.min(Math.max(this.cursorPosition + dir, 0), this.value.length)
+              this.cursorPosition = Math.min(Math.max(this.cursorPosition + dir, 0), cur_value.length)
             }
             handled = true;
           } else {
             if (dir < 0 && this.cursorPosition === 0 ||
-                dir > 0 && this.cursorPosition === this.value.length) {
+                dir > 0 && this.cursorPosition === cur_value.length) {
               handled = true;
             }
           }
@@ -611,7 +616,7 @@ export default {
 
         case 'End':
         case 'Home': {
-          const to_pos = e.key === 'Home' ? 0 : this.value.length;
+          const to_pos = e.key === 'Home' ? 0 : cur_value.length;
           if (e.shiftKey) {
             let act_ind = this.selectedKeywords.count > 0 ? this.selectedKeywords.lastActiveKeywordIndex : this.cursorPosition;
             if (act_ind > to_pos && to_pos === 0 && this.selectedKeywords.count === 0) act_ind--;
@@ -650,10 +655,10 @@ export default {
             if (this.$refs['textArea']) this.$refs['textArea'].value = '';
             return; // Will be handled by _onTextareaPaste
           } else if (e.key === "Redo" || e_code === 'KeyY' && is_ctrl || e_code === 'KeyZ' && is_ctrl && e.shiftKey) {
-            this.$emit('redo');
+            if (this.historyController) this.historyController.redo();
             handled = true;
           } else if (e.key === "Undo" || e_code === 'KeyZ' && is_ctrl) {
-            this.$emit('undo');
+            if (this.historyController) this.historyController.undo();
             handled = true;
           } else if (e_code === 'KeyA' && is_ctrl) {
             this.selectAll();
@@ -682,7 +687,7 @@ export default {
           } else kwd_elem.scrollIntoView({block: "nearest"});
         })
       } else if (can_open_editor) {
-        let cur_value = this.value;
+        let cur_value = this.value ? this.value : [];
         if (print_key && this.selectedKeywords.count > 0) {
           cur_value = this.deleteSelectedKeywords();
         }
@@ -724,9 +729,8 @@ export default {
     },
     _onTextareaInput(e) {
       e.preventDefault();
-      let cur_value = this.value;
       if (this.selectedKeywords.count > 0) {
-        cur_value = this.deleteSelectedKeywords();
+        this.deleteSelectedKeywords();
       }
       this.openEditor({
         put: e.data,
@@ -736,7 +740,7 @@ export default {
       if (!this.value || this.value.length <= keyword_index) return;
       const new_val = [...this.value];
       new_val.splice(keyword_index, 1);
-      this._emitValue(new_val);
+      this.emitValue(new_val);
     },
     openEditor(args) {
       this.editorPosition = this.cursorPosition;
@@ -827,7 +831,7 @@ export default {
       const is_cursor_before = is_regular_cursor && (this.cursorPositionRaw === keyword_index && !this.cursorPositionAfter) ||
           this.dragKeywordPosition === keyword_index && this.dragKeywordIsBegin ||
           this.dragKeywordPosition === -1 && keyword_index === 0;
-      const is_cursor_after = is_regular_cursor && this.cursorPositionRaw === keyword_index + 1 && (keyword_index === this.value.length - 1 || this.cursorPositionAfter) ||
+      const is_cursor_after = is_regular_cursor && this.cursorPositionRaw === keyword_index + 1 && (this.value && keyword_index === this.value.length - 1 || this.cursorPositionAfter) ||
           this.dragKeywordPosition === keyword_index && !this.dragKeywordIsBegin;
       const is_duplicated = this.highlightDuplicated && this.highlightDuplicated.hasOwnProperty(keyword);
       return {
@@ -838,7 +842,10 @@ export default {
         ...(this.getKeywordClasses ? this.getKeywordClasses(keyword, keyword_index) : {})
       }
     },
-    _emitValue(value) {
+    emitValue(value, record = true) {
+      if (record && this.historyController){
+        this.historyController.push(value);
+      }
       this.$emit(this.emitValueEvent, value);
     },
     _editorCommit(){
@@ -875,9 +882,12 @@ export default {
     }
 
   },
+  created(){
+    if (this.historyController) this.historyController.init(this, this.value);
+  },
   mounted() {
     this.$refs['scroller'].scrollTop = this.scrollY;
-    this.cursorPosition = this.value.length;
+    this.cursorPosition = this.value ? this.value.length : 0;
   },
   destroyed() {
     if (this.interactionContext) this.interactionContext.destroy();
@@ -888,6 +898,9 @@ export default {
       this.selectedKeywords.setValue(this.value);
       if (this.interactionContext) this.interactionContext.invalidateCache();
     },
+    historyController(){
+      if (this.historyController) this.historyController.init(this, this.value);
+    }
   }
 }
 </script>

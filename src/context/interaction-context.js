@@ -165,7 +165,7 @@ export default class InteractionContext{
             outside: 0,
             delButton: false
         };
-        if (this.component.value.length === 0) return res;
+        if (!this.component.value || this.component.value.length === 0) return res;
 
         let target = e.target;
         if (nodeHasClass(target, 'ImsKeywordBox-keyword-delete')){
@@ -198,7 +198,7 @@ export default class InteractionContext{
 
     _findMousePointInfoByCoords(x, y){
         const res = {
-            kwdIndex: this.component.value.length - 1,
+            kwdIndex: this.component.value ? this.component.value.length - 1 : -1,
             offset: 1,
             hoverKwdElement: null,
             outside: 1
@@ -233,7 +233,7 @@ export default class InteractionContext{
 
     _findKeywordEdgeIndex(line, which, canvas_top, line_height){
         let begin = 0;
-        let end = this.component.value.length - 1;
+        let end = this.component.value ? this.component.value.length - 1 : -1;
         while (begin <= end){
             const middle = Math.floor((end + begin) / 2);
             const middle_bound = this._getKeywordBounds(middle);
@@ -272,7 +272,7 @@ export default class InteractionContext{
     }
 
     _getLastKeywordBounds(){
-        return this._getKeywordBounds(this.component.value.length - 1);
+        return this._getKeywordBounds(this.component.value ? this.component.value.length - 1 : -1);
     }
 
     _getFirstKeywordBounds(){
@@ -336,12 +336,14 @@ export default class InteractionContext{
     }
 
     deleteDraggingMyKeywords(emit = true, cur_value = undefined){
-        let new_value = cur_value !== undefined ? cur_value: this.component.value;
+        cur_value = cur_value !== undefined ? cur_value : this.component.value;
+        if (!cur_value) cur_value = [];
+        let new_value = cur_value;
         if (this.draggingMyKeywords.length > 0){
             let first_selected_index = -1;
             new_value = [];
-            for (let index = 0; index < this.component.value.length; index++){
-                const v = this.component.value[index];
+            for (let index = 0; index < cur_value.length; index++){
+                const v = cur_value[index];
                 if (this.draggingMyKeywords.indexOf(v) >= 0) {
                     if (first_selected_index === -1) first_selected_index = index;
                 }
