@@ -131,6 +131,7 @@ export default {
   white-space: pre;
   display: block;
   padding: 0;
+  background: transparent;
 }
 
 .ImsKeywordBoxEditor-hidden{
