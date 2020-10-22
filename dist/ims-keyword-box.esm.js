@@ -329,6 +329,7 @@ class InteractionContext {
   }
 
   keywordClick(point_info, e) {
+    if (point_info.delButton) return;
     const is_ctrl = isPlatformCtrlClick(e);
     let clicked_keyword_index = point_info.kwdIndex;
     let clicked_separator_pos = -1;
@@ -403,12 +404,14 @@ class InteractionContext {
       kwdIndex: -1,
       offset: 1,
       hoverKwdElement: null,
-      outside: 0
+      outside: 0,
+      delButton: false
     };
     if (this.component.value.length === 0) return res;
     let target = e.target;
 
     if (nodeHasClass(target, 'ImsKeywordBox-keyword-delete')) {
+      res.delButton = true;
       target = getClosestNodeByClass(target, 'ImsKeywordBox-keyword');
       if (!target) target = e.target;
     }
@@ -1040,8 +1043,8 @@ var __vue_staticRenderFns__ = [];
 
 const __vue_inject_styles__ = function (inject) {
   if (!inject) return;
-  inject("data-v-04216822_0", {
-    source: ".ImsKeywordBoxEditor{position:relative;display:inline-block}.ImsKeywordBoxEditor-hidden,.ImsKeywordBoxEditor-input{outline:0;border:none;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;display:block;padding:0}.ImsKeywordBoxEditor-hidden{position:absolute;top:0;left:0;visibility:hidden;box-sizing:content-box;padding-right:5px}",
+  inject("data-v-41cddd5f_0", {
+    source: ".ImsKeywordBoxEditor{position:relative;display:inline-block}.ImsKeywordBoxEditor-hidden,.ImsKeywordBoxEditor-input{outline:0;border:none;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;display:block;padding:0;background:0 0}.ImsKeywordBoxEditor-hidden{position:absolute;top:0;left:0;visibility:hidden;box-sizing:content-box;padding-right:5px}",
     map: undefined,
     media: undefined
   });
