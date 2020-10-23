@@ -808,6 +808,14 @@ var script = {
       this.$refs['blur'].blur();
     },
 
+    isSelectionAtFirst() {
+      return this.$refs['input'].selectionStart === this.$refs['input'].selectionEnd && this.$refs['input'].selectionStart === 0;
+    },
+
+    isSelectionAtEnd() {
+      return this.$refs['input'].selectionStart === this.$refs['input'].selectionEnd && this.$refs['input'].selectionStart === this.rawVal.length;
+    },
+
     _onKeyDown(event) {
       if (!this.$refs['input']) return;
 
@@ -825,37 +833,44 @@ var script = {
           this.$emit('command', {
             command: 'move',
             dir: event.shiftKey ? -1 : 1,
-            cursorAtBegin: true
+            cursorAt: 0
           });
           break;
 
         case 'ArrowLeft':
-          if (this.$refs['input'].selectionStart === this.$refs['input'].selectionEnd) {
-            if (this.$refs['input'].selectionStart === 0) {
-              event.preventDefault();
-              this.$emit('command', {
-                command: 'move',
-                dir: -1,
-                cursorAtBegin: false
-              });
-            }
-          }
-
-          break;
-
         case 'ArrowRight':
-          if (this.$refs['input'].selectionStart === this.$refs['input'].selectionEnd) {
-            if (this.$refs['input'].selectionStart === this.rawVal.length) {
+          {
+            const check_left = event.key === 'ArrowLeft' && this.isSelectionAtFirst();
+            const check_right = event.key === 'ArrowRight' && this.isSelectionAtEnd();
+
+            if (check_left || check_right) {
               event.preventDefault();
               this.$emit('command', {
                 command: 'move',
-                dir: 1,
-                cursorAtBegin: true
+                dir: check_left ? -1 : 1,
+                cursorAt: check_right ? 0 : null
               });
             }
+
+            break;
           }
 
-          break;
+        case 'Backspace':
+        case 'Delete':
+          {
+            const check_left = event.key === 'Backspace' && this.isSelectionAtFirst();
+            const check_right = event.key === 'Delete' && this.isSelectionAtEnd();
+
+            if (check_left || check_right) {
+              event.preventDefault();
+              this.$emit('command', {
+                command: 'delSep',
+                dir: check_left ? -1 : 1
+              });
+            }
+
+            break;
+          }
       }
     }
 
@@ -1045,7 +1060,7 @@ var __vue_staticRenderFns__ = [];
 
 const __vue_inject_styles__ = function (inject) {
   if (!inject) return;
-  inject("data-v-41cddd5f_0", {
+  inject("data-v-207ef990_0", {
     source: ".ImsKeywordBoxEditor{position:relative;display:inline-block}.ImsKeywordBoxEditor-hidden,.ImsKeywordBoxEditor-input{outline:0;border:none;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;display:block;padding:0;background:0 0}.ImsKeywordBoxEditor-hidden{position:absolute;top:0;left:0;visibility:hidden;box-sizing:content-box;padding-right:5px}",
     map: undefined,
     media: undefined
@@ -1100,8 +1115,9 @@ class HistoryController {
 }
 
 class StackHistoryController extends HistoryController {
-  constructor() {
+  constructor(size = 25) {
     super();
+    this.size = size;
     this.history = [];
     this.pointer = 0;
   }
@@ -1123,7 +1139,7 @@ class StackHistoryController extends HistoryController {
 
 
   push(value) {
-    this.history = [value, ...this.history.slice(this.pointer)];
+    this.history = [value, ...this.history.slice(this.pointer, this.pointer + this.size)];
     this.pointer = 0;
   }
   /**
@@ -1356,16 +1372,20 @@ var script$1 = {
 
     /**
      *  Command "Paste": paste text instead of selected keywords
+     *  @param {string} text - pasting text
+     *  @param {string[]} editor_value - current value before paste
+     *  @param {function} emit_callback - if provided then this function called instead of emitting value
      */
-    pasteCommand(text) {
-      if (!text) return;
-      let cur_value = this.value;
+    pasteCommand(text, cur_value = undefined, emit_callback = null) {
+      cur_value = cur_value !== undefined ? cur_value : this.value;
 
       if (this.selectedKeywords.count > 0) {
         cur_value = this.deleteSelectedKeywords(false);
       }
 
-      this._pasteCommandImpl(this.cursorPosition, cur_value, text);
+      if (text) this._pasteCommandImpl(this.cursorPosition, cur_value, text, emit_callback);else {
+        if (emit_callback) emit_callback(cur_value);else this.emitValue(cur_value);
+      }
     },
 
     /**
@@ -1395,9 +1415,10 @@ var script$1 = {
      * @param {number} cursor - where paste
      * @param {string[]} cur_value - current component's value before paste
      * @param {string} text - what paste
+     * @param {function} emit_callback - if provided, call this function instead of emit
      * @returns {string[]} pasted keywords
      */
-    _pasteCommandImpl(cursor, cur_value, text) {
+    _pasteCommandImpl(cursor, cur_value, text, emit_callback = null) {
       if (!text) return;
       if (cursor < 0) cursor = 0;
       const exist_set = new Set(cur_value);
@@ -1432,7 +1453,7 @@ var script$1 = {
       if (split_norm.length !== 0 || cur_value !== this.value) {
         const new_value = [...cur_value];
         new_value.splice(cursor, 0, ...split_norm);
-        this.emitValue(new_value);
+        if (emit_callback) emit_callback(new_value);else this.emitValue(new_value);
       }
 
       if (duplicated) {
@@ -1893,7 +1914,7 @@ var script$1 = {
       this.editorPosition = this.cursorPosition;
       this.editorValue = null;
       this.editorInstead = !!args.instead;
-      let set_cursor = args.cursorAtBegin ? 0 : null;
+      let set_cursor = args.cursorAt !== null && args.cursorAt !== undefined ? args.cursorAt : null;
       if (args.put) this.editorValue = args.put;
 
       if (args.keyDownEvent) {
@@ -1999,18 +2020,15 @@ var script$1 = {
       this.$emit(this.emitValueEvent, value);
     },
 
-    _editorCommit() {
+    _editorCommit(cur_value = undefined, emit_callback = null) {
       if (this.editorPosition < 0) return;
       const editor_value = this.editorValue ? this.editorValue.trim() : '';
-
-      if (editor_value) {
-        this.cursorPosition = this.editorPosition;
-        if (this.editorInstead) this.selectedKeywords.setSelectedStateByIndex(this.editorPosition, true, false);
-        this.pasteCommand(editor_value);
-        this.focus();
-      }
-
+      this.cursorPosition = this.editorPosition;
+      if (this.editorInstead) this.selectedKeywords.setSelectedStateByIndex(this.editorPosition, true, false);
+      this.pasteCommand(editor_value, cur_value, emit_callback);
+      this.focus();
       this.editorPosition = -1;
+      return editor_value;
     },
 
     _editorCommand(cmd) {
@@ -2021,24 +2039,59 @@ var script$1 = {
           break;
 
         case 'move':
-          let new_cursor_position = this.editorPosition;
+          {
+            let new_cursor_position = this.editorPosition;
 
-          if (cmd.dir < 0) {
-            if (this.editorPosition <= 0) return;
-            new_cursor_position--;
-          } else {
-            if (!this.value || this.editorPosition >= this.value.length) return;
-            new_cursor_position++;
+            if (cmd.dir < 0) {
+              if (this.editorPosition <= 0) return;
+              new_cursor_position--;
+            } else {
+              if (!this.value || this.editorPosition >= this.value.length) return;
+              new_cursor_position++;
+            }
+
+            this._editorCommit();
+
+            this.cursorPosition = new_cursor_position;
+            this.openEditor({
+              instead: true,
+              cursorAt: cmd.cursorAt
+            });
+            break;
           }
 
-          this._editorCommit();
+        case 'delSep':
+          {
+            if (!this.value) return;
+            let new_cursor_position = this.editorPosition;
 
-          this.cursorPosition = new_cursor_position;
-          this.openEditor({
-            instead: true,
-            cursorAtBegin: cmd.cursorAtBegin
-          });
-          break;
+            if (cmd.dir < 0) {
+              if (this.editorPosition <= 0) return;
+              new_cursor_position--;
+            } else {
+              if (!this.value || this.editorPosition >= this.value.length) return;
+            }
+
+            let cur_value = this.value;
+
+            const editor_val = this._editorCommit(cur_value, val => cur_value = val);
+
+            const left_part = cur_value[new_cursor_position];
+            const right_part = editor_val ? cur_value[new_cursor_position + 1] : '';
+            const set_cursor = editor_val || cmd.dir < 0 ? left_part.length : 0;
+            this.cursorPosition = new_cursor_position;
+            const new_val = [...cur_value];
+            if (editor_val) new_val.splice(new_cursor_position + 1, 1);
+            new_val[new_cursor_position] = left_part + right_part;
+            this.emitValue(new_val);
+            this.$nextTick(() => {
+              this.openEditor({
+                instead: true,
+                cursorAt: set_cursor
+              });
+            });
+            break;
+          }
       }
     }
 
@@ -2202,7 +2255,7 @@ var __vue_staticRenderFns__$1 = [];
 
 const __vue_inject_styles__$1 = function (inject) {
   if (!inject) return;
-  inject("data-v-7cdb378f_0", {
+  inject("data-v-8f75140c_0", {
     source: ".ImsKeywordBox{border:1px solid #ccc;border-radius:4px;overflow:auto;position:relative;padding:0 6px;cursor:text}.ImsKeywordBox-scroller{height:100%;overflow-x:hidden;position:relative}.ImsKeywordBox-canvas{display:block;padding:4px 4px 4px 4px;line-height:2em;position:relative;user-select:none;outline:0;min-height:100%;box-sizing:border-box}.ImsKeywordBox-keyword-wrapper{white-space:nowrap;display:inline-block}.ImsKeywordBox-keyword-wrapper.state-highlighted{position:relative}.ImsKeywordBox-keyword-wrapper.state-highlighted>.ImsKeywordBox-keyword{cursor:text}.ImsKeywordBox-keyword-wrapper.state-highlighted:before{content:\"\";position:absolute;width:100%;height:2em;background:#e9e9e9;left:-4px;top:0;padding-left:4px;padding-right:5px}.ImsKeywordBox.state-focus .ImsKeywordBox-scroller>.ImsKeywordBox-canvas .ImsKeywordBox-keyword-wrapper.state-highlighted:before{background:#d7d4f0}.ImsKeywordBox-keyword-wrapper.state-highlighted{background:#faa}.ImsKeywordBox-textarea{width:0;height:0;overflow:hidden;padding:0;display:block;resize:none;position:absolute;background:0 0;border:none;top:0;left:0;color:transparent;outline:0}.ImsKeywordBox-textarea::-moz-selection,.ImsKeywordBox-textarea::selection{color:transparent}.ImsKeywordBox-keyword{padding:2px 7px;border:1px solid #ccc;border-radius:4px;line-height:1.4em;display:inline-block;white-space:nowrap;cursor:default;background-color:rgba(250,250,250,.7);position:relative}.ImsKeywordBox-keyword.state-cursor-after:after,.ImsKeywordBox-keyword.state-cursor-before:after,.ImsKeywordBox-stub.state-cursor-after:after,.ImsKeywordBox-stub.state-cursor-before:after{content:\"\";display:block;width:1px;height:29px;background:#000;position:absolute;top:-2px;pointer-events:none}.ImsKeywordBox-keyword.state-cursor-after.state-cursor-blink:after,.ImsKeywordBox-keyword.state-cursor-before.state-cursor-blink:after,.ImsKeywordBox-stub.state-cursor-after.state-cursor-blink:after,.ImsKeywordBox-stub.state-cursor-before.state-cursor-blink:after{animation:ImsKeywordBox-cursor-blink .5s infinite alternate}.ImsKeywordBox-keyword.state-cursor-before:after,.ImsKeywordBox-stub.state-cursor-before:after{left:-5px}.ImsKeywordBox-keyword.state-cursor-after:after{right:-6px}.ImsKeywordBox-keyword.state-duplicate{background-color:#ff9c9c}.ImsKeywordBox-stub{display:inline-block;width:1px;height:1.4em;position:relative}.ImsKeywordBox-stub.state-cursor-after:after{right:0}.ImsKeywordBox-separator{position:relative;display:inline-block;white-space:pre}.ImsKeywordBox-separator:first-child,.ImsKeywordBox-separator:last-child{color:#aaa}.ImsKeywordBox-line{display:block}.ImsKeywordBox-keyword-delete{background:url(\"data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m18.011 3.8674-6.0106 6.0106-6.0106-6.0106-2.1212 2.1212 6.0106 6.0106-6.0106 6.0106 2.1212 2.1212 6.0106-6.0106 6.0106 6.0106 2.1212-2.1212-6.0106-6.0106 6.0106-6.0106z'/%3E%3C/svg%3E%0A\") no-repeat right center;display:inline-block;width:12px;height:12px;cursor:pointer;background-size:contain;opacity:.5;position:relative;top:1px;margin-left:4px}.ImsKeywordBox-keyword-delete:hover{opacity:1}@keyframes ImsKeywordBox-cursor-blink{0%{opacity:1}49.9%{opacity:1}50%{opacity:0}100%{opacity:0}}",
     map: undefined,
     media: undefined
