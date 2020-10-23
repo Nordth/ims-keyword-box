@@ -2,8 +2,9 @@ import HistoryController from "./history-controller";
 
 export default class StackHistoryController extends HistoryController{
 
-    constructor() {
+    constructor(size = 25) {
         super();
+        this.size = size;
         this.history = [];
         this.pointer = 0
     }
@@ -23,7 +24,7 @@ export default class StackHistoryController extends HistoryController{
      * @param value - adding keywords
      */
     push(value) {
-        this.history = [value, ...this.history.slice(this.pointer)];
+        this.history = [value, ...this.history.slice(this.pointer, this.pointer + this.size)];
         this.pointer = 0;
     }
 
