@@ -57,6 +57,14 @@ export default {
       if (!this.$refs['blur']) return;
       this.$refs['blur'].blur();
     },
+    isSelectionAtFirst(){
+      return this.$refs['input'].selectionStart === this.$refs['input'].selectionEnd &&
+             this.$refs['input'].selectionStart === 0;
+    },
+    isSelectionAtEnd(){
+      return this.$refs['input'].selectionStart === this.$refs['input'].selectionEnd &&
+          this.$refs['input'].selectionStart === this.rawVal.length;
+    },
     _onKeyDown(event){
       if (!this.$refs['input']) return;
       switch (event.key){
@@ -70,33 +78,36 @@ export default {
           this.$emit('command', {
             command: 'move',
             dir: event.shiftKey ? -1 : 1,
-            cursorAtBegin: true
+            cursorAt: 0
           });
           break;
         case 'ArrowLeft':
-          if (this.$refs['input'].selectionStart === this.$refs['input'].selectionEnd){
-            if (this.$refs['input'].selectionStart === 0){
-              event.preventDefault();
-              this.$emit('command', {
-                command: 'move',
-                dir: -1,
-                cursorAtBegin: false
-              });
-            }
+        case 'ArrowRight':{
+          const check_left = event.key === 'ArrowLeft' && this.isSelectionAtFirst();
+          const check_right = event.key === 'ArrowRight' && this.isSelectionAtEnd();
+          if (check_left || check_right) {
+            event.preventDefault();
+            this.$emit('command', {
+              command: 'move',
+              dir: check_left ? -1 : 1,
+              cursorAt: check_right ? 0 : null
+            });
           }
           break;
-        case 'ArrowRight':
-          if (this.$refs['input'].selectionStart === this.$refs['input'].selectionEnd){
-            if (this.$refs['input'].selectionStart === this.rawVal.length){
-              event.preventDefault();
-              this.$emit('command', {
-                command: 'move',
-                dir: 1,
-                cursorAtBegin: true
-              });
-            }
+        }
+        case 'Backspace':
+        case 'Delete':{
+          const check_left = event.key === 'Backspace' && this.isSelectionAtFirst();
+          const check_right = event.key === 'Delete' && this.isSelectionAtEnd();
+          if (check_left || check_right) {
+            event.preventDefault();
+            this.$emit('command', {
+              command: 'delSep',
+              dir: check_left ? -1 : 1
+            });
           }
           break;
+        }
       }
     }
   },

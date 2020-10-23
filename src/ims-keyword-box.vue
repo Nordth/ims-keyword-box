@@ -262,16 +262,22 @@ export default {
     },
     /**
      *  Command "Paste": paste text instead of selected keywords
+     *  @param {string} text - pasting text
+     *  @param {string[]} editor_value - current value before paste
+     *  @param {function} emit_callback - if provided then this function called instead of emitting value
      */
-    pasteCommand(text) {
-      if (!text) return;
+    pasteCommand(text, cur_value = undefined, emit_callback = null) {
 
-      let cur_value = this.value;
+      cur_value = cur_value !== undefined ? cur_value : this.value;
       if (this.selectedKeywords.count > 0) {
         cur_value = this.deleteSelectedKeywords(false);
       }
 
-      this._pasteCommandImpl(this.cursorPosition, cur_value, text);
+      if (text) this._pasteCommandImpl(this.cursorPosition, cur_value, text, emit_callback);
+      else {
+        if (emit_callback) emit_callback(cur_value);
+        else this.emitValue(cur_value);
+      }
     },
     /**
      * Select all keywords
@@ -297,9 +303,10 @@ export default {
      * @param {number} cursor - where paste
      * @param {string[]} cur_value - current component's value before paste
      * @param {string} text - what paste
+     * @param {function} emit_callback - if provided, call this function instead of emit
      * @returns {string[]} pasted keywords
      */
-    _pasteCommandImpl(cursor, cur_value, text) {
+    _pasteCommandImpl(cursor, cur_value, text, emit_callback = null) {
       if (!text) return;
       if (cursor < 0) cursor = 0;
 
@@ -335,7 +342,8 @@ export default {
       if (split_norm.length !== 0 || cur_value !== this.value) {
         const new_value = [...cur_value];
         new_value.splice(cursor, 0, ...split_norm);
-        this.emitValue(new_value);
+        if (emit_callback) emit_callback(new_value)
+        else this.emitValue(new_value);
       }
 
       if (duplicated) {
@@ -746,7 +754,7 @@ export default {
       this.editorPosition = this.cursorPosition;
       this.editorValue = null;
       this.editorInstead = !!args.instead;
-      let set_cursor = args.cursorAtBegin ? 0 : null;
+      let set_cursor = args.cursorAt !== null && args.cursorAt !== undefined ? args.cursorAt : null;
       if (args.put) this.editorValue = args.put;
       if (args.keyDownEvent){
         switch (args.keyDownEvent.key){
@@ -848,36 +856,60 @@ export default {
       }
       this.$emit(this.emitValueEvent, value);
     },
-    _editorCommit(){
+    _editorCommit(cur_value = undefined, emit_callback = null){
       if (this.editorPosition < 0) return;
       const editor_value = this.editorValue ? this.editorValue.trim() : '';
-      if (editor_value){
-        this.cursorPosition = this.editorPosition;
-        if (this.editorInstead) this.selectedKeywords.setSelectedStateByIndex(this.editorPosition, true, false);
-        this.pasteCommand(editor_value);
-        this.focus();
-      }
+      this.cursorPosition = this.editorPosition;
+      if (this.editorInstead) this.selectedKeywords.setSelectedStateByIndex(this.editorPosition, true, false);
+      this.pasteCommand(editor_value, cur_value, emit_callback);
+      this.focus();
       this.editorPosition = -1;
+      return editor_value;
     },
     _editorCommand(cmd){
       switch (cmd.command){
         case 'commit':
           this._editorCommit();
           break;
-        case 'move':
+        case 'move': {
           let new_cursor_position = this.editorPosition;
-          if (cmd.dir < 0){
+          if (cmd.dir < 0) {
             if (this.editorPosition <= 0) return;
             new_cursor_position--;
-          }
-          else {
+          } else {
             if (!this.value || this.editorPosition >= this.value.length) return;
             new_cursor_position++;
           }
           this._editorCommit();
           this.cursorPosition = new_cursor_position;
-          this.openEditor({instead: true, cursorAtBegin: cmd.cursorAtBegin})
+          this.openEditor({instead: true, cursorAt: cmd.cursorAt})
           break;
+        }
+        case 'delSep': {
+          if (!this.value) return;
+          let new_cursor_position = this.editorPosition;
+          if (cmd.dir < 0) {
+            if (this.editorPosition <= 0) return;
+            new_cursor_position--;
+          } else {
+            if (!this.value || this.editorPosition >= this.value.length) return;
+          }
+          let cur_value = this.value;
+          const editor_val = this._editorCommit(cur_value, (val) => cur_value = val);
+          const left_part = cur_value[new_cursor_position];
+          const right_part = editor_val ? cur_value[new_cursor_position + 1] : '';
+          const set_cursor = editor_val || cmd.dir < 0 ? left_part.length : 0;
+          this.cursorPosition = new_cursor_position;
+          const new_val = [...cur_value];
+          if (editor_val) new_val.splice(new_cursor_position + 1, 1);
+          new_val[new_cursor_position] = left_part + right_part;
+          this.emitValue(new_val);
+          this.$nextTick(() => {
+            this.openEditor({instead: true, cursorAt: set_cursor}
+          )});
+          break;
+        }
+
       }
     }
 
