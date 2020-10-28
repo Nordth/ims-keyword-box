@@ -8,15 +8,33 @@
     <style>
         body{
             font-family: sans-serif;
+            background: #3eaf7c;
+            margin: 0;
         }
-        h1{
+        #app{
+            background: #FFF;
+            max-width: 1280px;
+            min-height: 100vh;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .header{
             text-align: center;
+            margin-bottom: 30px;
+        }
+        .header-sub{
+            font-size: 14px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <h1>ImsKeywordBox</h1>
     <div id="app">
+        <h1 class="header">
+            ImsKeywordBox demo
+            <div class="header-sub">Vue.js keyword/tag editor component</div>
+        </h1>
         <ims-keyword-box
             v-model="keywords"
         ></ims-keyword-box>
