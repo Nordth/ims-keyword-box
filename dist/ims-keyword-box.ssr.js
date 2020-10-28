@@ -1823,7 +1823,9 @@ var script$1 = {
       var emit_callback = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
       if (!text) return;
       if (cursor < 0) cursor = 0;
-      var exist_set = new Set(cur_value);
+      if (!cur_value) cur_value = [];
+      var original_value = cur_value;
+      var exist_set = new Set(original_value);
       var ins_repeat_check = new Set();
       var split = text.split(this.splittingRegexp);
       var split_norm = [];
@@ -1840,7 +1842,7 @@ var script$1 = {
           duplicated[e_norm_val] = Date.now();
           var index_of_exist = cur_value.indexOf(e_norm_val);
           if (index_of_exist < cursor) continue;else {
-            cur_value = cur_value !== this.value ? cur_value : _toConsumableArray(cur_value);
+            cur_value = cur_value !== original_value ? cur_value : _toConsumableArray(cur_value);
             cur_value.splice(index_of_exist, 1);
           }
         }
@@ -1852,7 +1854,7 @@ var script$1 = {
       this.cursorPosition = cursor + split_norm.length;
       this.selectedKeywords.lastActiveKeywordIndex = this.cursorPosition;
 
-      if (split_norm.length !== 0 || cur_value !== this.value) {
+      if (split_norm.length !== 0 || cur_value !== original_value) {
         var new_value = _toConsumableArray(cur_value);
 
         new_value.splice.apply(new_value, [cursor, 0].concat(split_norm));
@@ -2534,7 +2536,7 @@ var script$1 = {
     if (this.historyController) this.historyController.init(this, this.value);
   },
   mounted: function mounted() {
-    this.$refs['scroller'].scrollTop = this.scrollY;
+    if (this.$refs['scroller']) this.$refs['scroller'].scrollTop = this.scrollY;
     this.cursorPosition = this.value ? this.value.length : 0;
   },
   destroyed: function destroyed() {
@@ -2595,7 +2597,7 @@ var __vue_render__$1 = function __vue_render__() {
   })], 2)] : _vm._ssrNode("<div" + _vm._ssrClass("ImsKeywordBox-stub", {
     'state-cursor-after': _vm.cursorPosition === 0 && _vm.focused || _vm.dragKeywordPosition === -1,
     'state-cursor-blink': _vm.cursorPosition === 0 && _vm.focused && _vm.dragKeywordPosition === null
-  }) + "></div>"), _vm._ssrNode(" "), !_vm.value.length && _vm.editorPosition === 0 || _vm.editorPosition === _vm.value.length ? _c('ims-keyword-box-editor', {
+  }) + "></div>"), _vm._ssrNode(" "), (!_vm.value || !_vm.value.length) && _vm.editorPosition === 0 || _vm.value && _vm.editorPosition === _vm.value.length ? _c('ims-keyword-box-editor', {
     ref: "editor",
     staticClass: "ImsKeywordBox-editor",
     on: {
@@ -2617,7 +2619,7 @@ var __vue_staticRenderFns__$1 = [];
 
 var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
   if (!inject) return;
-  inject("data-v-8f75140c_0", {
+  inject("data-v-2602882f_0", {
     source: ".ImsKeywordBox{border:1px solid #ccc;border-radius:4px;overflow:auto;position:relative;padding:0 6px;cursor:text}.ImsKeywordBox-scroller{height:100%;overflow-x:hidden;position:relative}.ImsKeywordBox-canvas{display:block;padding:4px 4px 4px 4px;line-height:2em;position:relative;user-select:none;outline:0;min-height:100%;box-sizing:border-box}.ImsKeywordBox-keyword-wrapper{white-space:nowrap;display:inline-block}.ImsKeywordBox-keyword-wrapper.state-highlighted{position:relative}.ImsKeywordBox-keyword-wrapper.state-highlighted>.ImsKeywordBox-keyword{cursor:text}.ImsKeywordBox-keyword-wrapper.state-highlighted:before{content:\"\";position:absolute;width:100%;height:2em;background:#e9e9e9;left:-4px;top:0;padding-left:4px;padding-right:5px}.ImsKeywordBox.state-focus .ImsKeywordBox-scroller>.ImsKeywordBox-canvas .ImsKeywordBox-keyword-wrapper.state-highlighted:before{background:#d7d4f0}.ImsKeywordBox-keyword-wrapper.state-highlighted{background:#faa}.ImsKeywordBox-textarea{width:0;height:0;overflow:hidden;padding:0;display:block;resize:none;position:absolute;background:0 0;border:none;top:0;left:0;color:transparent;outline:0}.ImsKeywordBox-textarea::-moz-selection,.ImsKeywordBox-textarea::selection{color:transparent}.ImsKeywordBox-keyword{padding:2px 7px;border:1px solid #ccc;border-radius:4px;line-height:1.4em;display:inline-block;white-space:nowrap;cursor:default;background-color:rgba(250,250,250,.7);position:relative}.ImsKeywordBox-keyword.state-cursor-after:after,.ImsKeywordBox-keyword.state-cursor-before:after,.ImsKeywordBox-stub.state-cursor-after:after,.ImsKeywordBox-stub.state-cursor-before:after{content:\"\";display:block;width:1px;height:29px;background:#000;position:absolute;top:-2px;pointer-events:none}.ImsKeywordBox-keyword.state-cursor-after.state-cursor-blink:after,.ImsKeywordBox-keyword.state-cursor-before.state-cursor-blink:after,.ImsKeywordBox-stub.state-cursor-after.state-cursor-blink:after,.ImsKeywordBox-stub.state-cursor-before.state-cursor-blink:after{animation:ImsKeywordBox-cursor-blink .5s infinite alternate}.ImsKeywordBox-keyword.state-cursor-before:after,.ImsKeywordBox-stub.state-cursor-before:after{left:-5px}.ImsKeywordBox-keyword.state-cursor-after:after{right:-6px}.ImsKeywordBox-keyword.state-duplicate{background-color:#ff9c9c}.ImsKeywordBox-stub{display:inline-block;width:1px;height:1.4em;position:relative}.ImsKeywordBox-stub.state-cursor-after:after{right:0}.ImsKeywordBox-separator{position:relative;display:inline-block;white-space:pre}.ImsKeywordBox-separator:first-child,.ImsKeywordBox-separator:last-child{color:#aaa}.ImsKeywordBox-line{display:block}.ImsKeywordBox-keyword-delete{background:url(\"data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m18.011 3.8674-6.0106 6.0106-6.0106-6.0106-2.1212 2.1212 6.0106 6.0106-6.0106 6.0106 2.1212 2.1212 6.0106-6.0106 6.0106 6.0106 2.1212-2.1212-6.0106-6.0106 6.0106-6.0106z'/%3E%3C/svg%3E%0A\") no-repeat right center;display:inline-block;width:12px;height:12px;cursor:pointer;background-size:contain;opacity:.5;position:relative;top:1px;margin-left:4px}.ImsKeywordBox-keyword-delete:hover{opacity:1}@keyframes ImsKeywordBox-cursor-blink{0%{opacity:1}49.9%{opacity:1}50%{opacity:0}100%{opacity:0}}",
     map: undefined,
     media: undefined
@@ -2629,7 +2631,7 @@ var __vue_inject_styles__$1 = function __vue_inject_styles__(inject) {
 var __vue_scope_id__$1 = undefined;
 /* module identifier */
 
-var __vue_module_identifier__$1 = "data-v-8f75140c";
+var __vue_module_identifier__$1 = "data-v-2602882f";
 /* functional template */
 
 var __vue_is_functional_template__$1 = false;

@@ -82,7 +82,7 @@
               }"></div>
         </template>
         <ims-keyword-box-editor
-            v-if="!value.length && editorPosition === 0 || editorPosition === value.length"
+            v-if="(!value || !value.length) && editorPosition === 0 || (value && editorPosition === value.length)"
             class="ImsKeywordBox-editor"
             v-model="editorValue"
             @blur="_editorCommit"
@@ -309,8 +309,10 @@ export default {
     _pasteCommandImpl(cursor, cur_value, text, emit_callback = null) {
       if (!text) return;
       if (cursor < 0) cursor = 0;
+      if (!cur_value) cur_value = [];
+      const original_value = cur_value;
 
-      const exist_set = new Set(cur_value);
+      const exist_set = new Set(original_value);
       const ins_repeat_check = new Set();
       const split = text.split(this.splittingRegexp);
       const split_norm = [];
@@ -329,7 +331,7 @@ export default {
           const index_of_exist = cur_value.indexOf(e_norm_val);
           if (index_of_exist < cursor) continue;
           else {
-            cur_value = cur_value !== this.value ? cur_value : [...cur_value];
+            cur_value = cur_value !== original_value ? cur_value : [...cur_value];
             cur_value.splice(index_of_exist, 1);
           }
         }
@@ -339,7 +341,7 @@ export default {
       this.selectedKeywords.clear();
       this.cursorPosition = cursor + split_norm.length;
       this.selectedKeywords.lastActiveKeywordIndex = this.cursorPosition;
-      if (split_norm.length !== 0 || cur_value !== this.value) {
+      if (split_norm.length !== 0 || cur_value !== original_value) {
         const new_value = [...cur_value];
         new_value.splice(cursor, 0, ...split_norm);
         if (emit_callback) emit_callback(new_value)
@@ -918,7 +920,7 @@ export default {
     if (this.historyController) this.historyController.init(this, this.value);
   },
   mounted() {
-    this.$refs['scroller'].scrollTop = this.scrollY;
+    if (this.$refs['scroller']) this.$refs['scroller'].scrollTop = this.scrollY;
     this.cursorPosition = this.value ? this.value.length : 0;
   },
   destroyed() {
