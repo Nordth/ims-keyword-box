@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ImsKeywordBox - demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
+    <script src="https://raw.githack.com/Nordth/ims-keyword-box/main/dist/ims-keyword-box.min.js"></script>
+    <style>
+        body{
+            font-family: sans-serif;
+        }
+        h1{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>ImsKeywordBox</h1>
+    <div id="app">
+        <ims-keyword-box
+            v-model="keywords"
+        ></ims-keyword-box>
+    </div>
+    <script>
+        const app = new Vue({
+            el: '#app',
+            data: {
+                keywords: ["apple","red","delicious","food","fruit","isolated","healthy","nutritious","organic","ripe","sweet"]
+            }
+        })
+    </script>
+</body>
+</html>
