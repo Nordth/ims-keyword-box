@@ -2,6 +2,8 @@
   "name": "@nordth/ims-keyword-box",
   "version": "1.0.0",
   "description": "Vue.js tag/keyword editing component",
+  "homepage": "https://nordth.github.io/ims-keyword-box/",
+  "private": false,
   "main": "dist/ims-keyword-box.ssr.js",
   "browser": "dist/ims-keyword-box.esm.js",
   "module": "dist/ims-keyword-box.esm.js",
