@@ -43,7 +43,7 @@ npm install ims-keyword-box
 
 Browser via CDN
 ```
-<script src=https://rawcdn.githack.com/Nordth/ims-keyword-box/v1.0.1/dist/ims-keyword-box.min.js"></script>
+<script src=https://rawcdn.githack.com/Nordth/ims-keyword-box/v1.0.2/dist/ims-keyword-box.min.js"></script>
 ```
 
 ## Usage
