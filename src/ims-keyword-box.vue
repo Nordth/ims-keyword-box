@@ -1023,6 +1023,9 @@ export default {
     },
     historyController(){
       if (this.historyController) this.historyController.init(this, this.value);
+    },
+    scrollY(){
+      if (this.$refs['scroller']) this.$refs['scroller'].scrollTop = this.scrollY;
     }
   }
 }
