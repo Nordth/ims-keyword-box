@@ -1,5 +1,5 @@
 {
-  "name": "@nordth/ims-keyword-box",
+  "name": "ims-keyword-box",
   "version": "1.0.0",
   "description": "Vue.js tag/keyword editing component",
   "homepage": "https://nordth.github.io/ims-keyword-box/",
