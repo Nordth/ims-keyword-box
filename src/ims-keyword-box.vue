@@ -57,7 +57,7 @@
                     ></template
                     ><span
                         v-if="editorPosition !== keyword_index || !editorInstead"
-                        draggable
+                        :draggable="!isMobile"
                         class="ImsKeywordBox-keyword-wrapper"
                         :class="{'state-highlighted': selectedKeywords.isSelected(keyword)}"
                         :data-kwd-ind="keyword_index"
@@ -152,7 +152,8 @@ export default {
       focused: false,
       editorPosition: -1,
       editorInstead: false,
-      editorValue: null
+      editorValue: null,
+      isMobile: false
     }
   },
   computed: {
@@ -1011,6 +1012,7 @@ export default {
   mounted() {
     if (this.$refs['scroller']) this.$refs['scroller'].scrollTop = this.scrollY;
     this.cursorPosition = this.value ? this.value.length : 0;
+    this.isMobile = isPlatform('mobile');
   },
   destroyed() {
     if (this.interactionContext) this.interactionContext.destroy();

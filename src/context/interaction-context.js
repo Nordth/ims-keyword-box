@@ -41,6 +41,8 @@ export default class InteractionContext{
     }
 
     onMouseUpdate(e){
+        if (this.component.isMobile) return;
+
         const is_ctrl = isPlatformCtrlClick(e);
 
         this.curPoint = this.getMousePointInfo(e);
