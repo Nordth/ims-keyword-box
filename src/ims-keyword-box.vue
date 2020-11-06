@@ -429,9 +429,14 @@ export default {
       if (editor) return;
 
       if (this.$refs['textArea']) {
-        setTimeout(() => {
-          if (this.$refs['textArea']) this.$refs['textArea'].focus();
-        }, 10);
+        if (this.isMobile){
+          this.$refs['textArea'].focus(); // Focus immediately for iOS
+        }
+        else {
+          setTimeout(() => {
+            if (this.$refs['textArea']) this.$refs['textArea'].focus();
+          }, 10);
+        }
       }
 
       if (this.interactionContext) return;
