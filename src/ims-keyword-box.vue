@@ -451,6 +451,10 @@ export default {
       }, 100);
     },
     _onTextareaBlur() {
+      if (this.isMobile && this.interactionContext){
+        this.$refs['textArea'].focus();
+        return;
+      }
       this.focused = false;
       setTimeout(() => {
         if (document.activeElement === this.$refs['textArea']) return;

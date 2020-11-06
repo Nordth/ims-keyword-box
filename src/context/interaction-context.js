@@ -26,6 +26,7 @@ export default class InteractionContext{
     }
 
     onMouseEnd(e){
+        if (this.component.isMobile) e.preventDefault();
         this.curPoint = this.getMousePointInfo(e);
         if (this.isDragging){
          if (e.dataTransfer.dropEffect === 'move'){
