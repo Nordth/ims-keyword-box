@@ -1,5 +1,8 @@
 # ImsKeywordBox
 
+![Version](https://img.shields.io/npm/v/ims-keyword-box)
+![License](https://img.shields.io/github/license/Nordth/ims-keyword-box)
+
 **ImsKeywordBox** is Vue.js tag/keyword input component
 
 > This editor originally created for my pet project [ImStocker](http://imstocker.com/) - keywording tool for microstockers.
@@ -30,6 +33,38 @@
 
 - Option to use an objects instead of the strings for `value` property (with title and key/id)
 - Autocompletion
+
+## Install
+
+NPM
+```
+npm install ims-keyword-box
+```
+
+## Usage
+
+```html
+<template>
+   <ims-keyword-box
+       v-model="tags"
+   />
+</template>
+```
+
+```javascript
+import ImsKeywordBox from 'ims-keyword-box';
+
+export default {
+  components: {
+    ImsKeywordBox,
+  },
+  data() {
+    return {
+      keywords: []
+    };
+  },
+};
+```
 
 ## License
 

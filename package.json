@@ -1,6 +1,6 @@
 {
   "name": "ims-keyword-box",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Vue.js tag/keyword editing component",
   "homepage": "https://nordth.github.io/ims-keyword-box/",
   "private": false,
@@ -8,6 +8,14 @@
   "browser": "dist/ims-keyword-box.esm.js",
   "module": "dist/ims-keyword-box.esm.js",
   "unpkg": "dist/ims-keyword-box.min.js",
+  "keywords": [
+    "javascript",
+    "vue",
+    "tags",
+    "vue-component",
+    "keywords",
+    "editor"
+  ],
   "license": "MIT",
   "files": [
     "dist/*",
