@@ -71,7 +71,7 @@
                           ><span
                             v-if="showDeleteButton"
                             class="ImsKeywordBox-keyword-delete"
-                            @click="deleteKeywordByIndex(keyword_index)"
+                            @click="_onDeleteKeywordButtonClick(keyword_index)"
                           ></span
                         ></span
                     ></span
@@ -153,7 +153,8 @@ export default {
       editorPosition: -1,
       editorInstead: false,
       editorValue: null,
-      isMobile: false
+      isMobile: false,
+      confirmDeleteIndex: null
     }
   },
   computed: {
@@ -904,6 +905,7 @@ export default {
         'state-cursor-after': is_cursor_after,
         'state-cursor-blink': (is_cursor_before || is_cursor_after) && is_regular_cursor,
         'state-duplicate': is_duplicated,
+        'state-confirm-delete': this.confirmDeleteIndex === keyword_index
       }
       if (this.getKeywordClasses){
         const user_classes = this.getKeywordClasses(keyword, keyword_index);
@@ -1004,6 +1006,13 @@ export default {
       if (this.separatorComp.before) return false;
       return true;
     },
+    _onDeleteKeywordButtonClick(keyword_index){
+      if (!this.isMobile || this.confirmDeleteIndex === keyword_index){
+        this.deleteKeywordByIndex(keyword_index);
+        this.confirmDeleteIndex = null;
+      }
+      else this.confirmDeleteIndex = keyword_index;
+    }
 
   },
   created(){
@@ -1165,6 +1174,10 @@ export default {
   background-color: #ff9c9c;
 }
 
+.ImsKeywordBox-keyword.state-confirm-delete .ImsKeywordBox-keyword-delete{
+  animation: ImsKeywordBox-confirm-delete-blink 0.5s 2;
+}
+
 .ImsKeywordBox-stub {
   display: inline-block;
   width: 1px;
@@ -1221,6 +1234,18 @@ export default {
   }
   100% {
     opacity: 0;
+  }
+}
+
+@keyframes ImsKeywordBox-confirm-delete-blink {
+  0%{
+    opacity: 1;
+  }
+  50%{
+    opacity: 0;
+  }
+  100%{
+    opacity: 1;
   }
 }
 </style>
