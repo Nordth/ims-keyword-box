@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>ImsKeywordBox - demo</title>
+    <title>ImsKeywordBox - demo & docs</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
     <script src="https://raw.githack.com/Nordth/ims-keyword-box/main/dist/ims-keyword-box.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -93,12 +93,46 @@
             max-height: 20vh;
             background: #FFF;
         }
+        .ImsKeywordBox-keyword.kwd-highlight{
+            color: #8703cf;
+            font-weight: bold;
+        }
+        .ImsKeywordBox-keyword.kwd-len-1{
+            background: rgba(255, 35, 35, 0.1);
+        }
+        .ImsKeywordBox-keyword.kwd-len-2{
+            background: rgba(255, 35, 35, 0.15);
+        }
+        .ImsKeywordBox-keyword.kwd-len-3{
+            background: rgba(255, 35, 35, 0.2);
+        }
+        .ImsKeywordBox-keyword.kwd-len-4{
+            background: rgba(255, 35, 35, 0.25);
+        }
+        .ImsKeywordBox-keyword.kwd-len-5{
+            background: rgba(255, 35, 35, 0.3);
+        }
+        .ImsKeywordBox-keyword.kwd-len-6{
+            background: rgba(255, 35, 35, 0.35);
+        }
+        .ImsKeywordBox-keyword.kwd-len-7{
+            background: rgba(255, 35, 35, 0.4);
+        }
+        .ImsKeywordBox-keyword.kwd-len-8{
+            background: rgba(255, 35, 35, 0.45);
+        }
+        .ImsKeywordBox-keyword.kwd-len-9{
+            background: rgba(255, 35, 35, 0.5);
+        }
+        .ImsKeywordBox-keyword.kwd-len-10{
+            background: rgba(255, 35, 35, 0.55);
+        }
     </style>
 </head>
 <body>
     <div id="app">
         <h1 class="header">
-            ImsKeywordBox demo
+            ImsKeywordBox demo & docs
             <div class="header-sub">Vue.js keyword/tag editor component</div>
         </h1>
         <div class="keywordbox-zone">
@@ -109,6 +143,7 @@
                 :separator="separator"
                 :splitting-regexp="splittingRegexpRes.regExp"
                 :preprocess-keyword="preprocessKeyword"
+                :get-keyword-classes="getKeywordClasses"
             ></ims-keyword-box>
         </div>
         <h2 class="header">Properties</h2>
@@ -184,7 +219,7 @@
                 </tr>
                 <tr>
                     <th class="prop-table-col-name">preprocessKeyword</th>
-                    <td class="prop-table-col-desc">Allows you to specify the function that will change the entered keywords before emitting new value. <i class="prop-type">Function</i><br>
+                    <td class="prop-table-col-desc">Allows to specify the function that will change the entered keywords before emitting new value. <i class="prop-type">Function</i><br>
                         <br>
                         <ul class="prop-func-variants">
                             <li>
@@ -209,6 +244,29 @@
                             </option>
                         </select>
                         <code class="prop-code" v-if="preprocessKeyword">{{displayFunc(preprocessKeyword)}}</code>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">getKeywordClasses</th>
+                    <td class="prop-table-col-desc">Allows to set CSS-classes for keywords. <i class="prop-type">Function</i><br>
+                        <br>
+                        <ul class="prop-func-variants">
+                            <li>
+                                <span class="prop-func-variants-caption">(string keyword, number keyword_index) => string | string[] | object:</span>
+                                receives keyword and its index. Should return CSS-classes for that keyword: single class, array of classes or object where keys are classes and values should be <i>true</i> to add corresponding class
+                            </li>
+                        </ul>
+                    </td>
+                    <td class="prop-table-col-val">
+                        <select
+                                class="prop-input"
+                                v-model="getKeywordClasses"
+                        >
+                            <option v-for="opt in getKeywordClassesOptions" :value="opt.value">
+                                {{opt.title}}
+                            </option>
+                        </select>
+                        <code class="prop-code" v-if="getKeywordClasses">{{displayFunc(getKeywordClasses)}}</code>
                     </td>
                 </tr>
             </table>
@@ -261,23 +319,16 @@
                         value: null
                     },
                     {
-                        title: '',
-                        value: (keyword) => {
-                            return keyword.toLowerCase();
+                        title: 'Change color depend on length of keyword',
+                        value: (keyword, keyword_index) => {
+                            const len_code = Math.min(keyword.length, 10);
+                            return 'kwd-len-' + len_code;
                         }
                     },
                     {
-                        title: 'Split keywords longer than 5 characters',
-                        value: (keyword) => {
-                            const max_word = 5;
-                            if (keyword.length <= max_word) return keyword;
-                            const splitted = [];
-                            while (keyword.length > max_word){
-                                splitted.push(keyword.substring(0, max_word));
-                                keyword = keyword.substring(max_word);
-                            }
-                            splitted.push(keyword);
-                            return splitted;
+                        title: 'Highlight first 5 keywords',
+                        value: (keyword, keyword_index) => {
+                            return keyword_index < 5 ? 'kwd-highlight' : null
                         }
                     },
                 ],
