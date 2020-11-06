@@ -130,6 +130,9 @@
         .ImsKeywordBox-keyword.kwd-len-10{
             background: rgba(255, 35, 35, 0.55);
         }
+        .prop-table-col-fn-desc{
+            width:70%
+        }
         @media screen and (max-width: 1024px){
             .keywordbox{
                 max-height: none;
@@ -146,6 +149,7 @@
         </h1>
         <div class="keywordbox-zone">
             <ims-keyword-box
+                ref="keywordbox"
                 class="keywordbox"
                 v-model="keywords"
                 :show-delete-button="showDeleteButton"
@@ -345,6 +349,57 @@
                 </tr>
             </table>
         </div>
+        <h2 class="header">Methods</h2>
+        <div class="prop-table-zone">
+
+            <table class="prop-table">
+                <tr>
+                    <th class="prop-table-col-fn-name">focus()</th>
+                    <td class="prop-table-col-fn-desc">
+                        Make component focused
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-fn-name">selectAll()</th>
+                    <td class="prop-table-col-fn-desc">
+                        Select all keywords
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-fn-name">setCursorPosition(keyword_index, after)</th>
+                    <td class="prop-table-col-fn-desc">
+                        Set cursor position before or after specified keyword index<br>
+                        <br>
+                        <ul class="prop-func-variants">
+                            <li>
+                                <span class="prop-func-variants-caption">keyword_index</span> - keyword index. <i class="prop-type">Number</i>
+                            </li>
+                            <li>
+                                <span class="prop-func-variants-caption">after</span> - set cursor after or before specified keyword. <i class="prop-type">Boolean</i>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-fn-name">deleteSelectedKeywords(emit = true)</th>
+                    <td class="prop-table-col-fn-desc">
+                        Delete selected keywords<br>
+                        <br>
+                        <ul class="prop-func-variants">
+                            <li>
+                                <span class="prop-func-variants-caption">emit</span> - emit value after deletion. <i class="prop-type">Boolean</i>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-fn-name">getSelectionsAsJoinedString()</th>
+                    <td class="prop-table-col-fn-desc">
+                        Return selected keywords as joined string
+                    </td>
+                </tr>
+            </table>
+        </div>
     </div>
     <script>
         const app = new Vue({
@@ -416,7 +471,11 @@
                         }
                     },
                 ],
-                scrollY: 0
+                scrollY: 0,
+                setCursorPosition: {
+                    keyword_index: 0,
+                    after: false
+                }
             },
             computed:{
                 splittingRegexpRes(){
@@ -483,7 +542,7 @@
                         new_val.push('keyword ' + Math.round(Math.random() * 1000));
                     }
                     this.keywords = new_val;
-                }
+                },
             }
         })
     </script>

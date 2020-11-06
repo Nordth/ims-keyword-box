@@ -197,8 +197,8 @@ export default {
      * @param {number} val - index of keyword
      * @param {boolean} after - show cursor after this keyword
      */
-    setCursorPosition(val, after) {
-      this.cursorPositionRaw = val;
+    setCursorPosition(keyword_index, after) {
+      this.cursorPositionRaw = keyword_index;
       this.cursorPositionAfter = after;
     },
     /**
