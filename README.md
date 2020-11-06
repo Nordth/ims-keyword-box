@@ -1,7 +1,7 @@
 # ImsKeywordBox
 
-![Version](https://img.shields.io/npm/v/ims-keyword-box)
-![License](https://img.shields.io/github/license/Nordth/ims-keyword-box)
+[![Version](https://img.shields.io/npm/v/ims-keyword-box)](https://www.npmjs.com/package/ims-keyword-box)
+[![License](https://img.shields.io/github/license/Nordth/ims-keyword-box)](LICENSE)
 
 **ImsKeywordBox** is Vue.js tag/keyword input component
 
