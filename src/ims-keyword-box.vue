@@ -431,6 +431,7 @@ export default {
       if (this.$refs['textArea']) {
         if (this.isMobile){
           this.$refs['textArea'].focus(); // Focus immediately for iOS
+          e.preventDefault();
         }
         else {
           setTimeout(() => {
@@ -1129,6 +1130,9 @@ export default {
   color: transparent;
   outline: none;
   opacity: 0.01;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+  font-size:1px;
 }
 
 .ImsKeywordBox-textarea::-moz-selection,
