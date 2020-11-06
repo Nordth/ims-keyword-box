@@ -129,7 +129,7 @@ export default {
     value: {},
     showDeleteButton: { type: Boolean, default: true },
     separator: {type: [String, Object], default: ', '},
-    splittingRegexp: {type: RegExp, default: () => /[;,\r\n]/},
+    splittingRegexp: {type: RegExp, default: () => /[;,\r\n#]/},
     preprocessKeyword: {type: Function, default: null},
     getKeywordClasses: {type: Function, default: null},
     scrollY: {type: Number, default: 0},
