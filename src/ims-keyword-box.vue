@@ -64,9 +64,9 @@
                         ><span
                           class="ImsKeywordBox-keyword"
                           :class="_getKeywordClasses(keyword, keyword_index)"
-                        ><span v-if="_showInsideSeparatorBefore(keyword_index)"
+                        ><span v-if="_showInsideSeparatorBefore(keyword_index)" class="ImsKeywordBox-separator-inside"
                           >{{keyword_index === 0 ? separatorComp.first : separatorComp.text}}</span
-                          >{{ keyword }}<span v-if="_showInsideSeparatorAfter(keyword_index)"
+                          >{{ keyword }}<span v-if="_showInsideSeparatorAfter(keyword_index)"  class="ImsKeywordBox-separator-inside"
                           >{{keyword_index === 0 ? separatorComp.first : separatorComp.text}}</span
                           ><span
                             v-if="showDeleteButton"
@@ -177,7 +177,9 @@ export default {
       if (this.separator && typeof this.separator === 'object'){
         Object.assign(res, this.separator);
       }
-      res.between = res.inside ? ' ' : res.text;
+      if (res.between === null || !res.inside) {
+        res.between = res.inside ? ' ' : res.text;
+      }
       res.isNewLine = res.text === '\r\n';
       if (res.first === null){
         res.first = res.text
@@ -259,7 +261,12 @@ export default {
      */
     getSelectionsAsJoinedString() {
       const sel_arr = this.selectedKeywords.getSelectionAsArray();
-      let res = sel_arr.join(this.separatorComp.text);
+      let glue = this.separatorComp.text;
+      if (this.separatorComp.inside){
+        if (this.separatorComp.before) glue = this.separatorComp.between + glue
+        else glue = glue + this.separatorComp.between
+      }
+      let res = sel_arr.join(glue);
       if (this.separatorComp.before) res = this.separatorComp.first + res;
       return res;
     },
@@ -856,13 +863,17 @@ export default {
       const clone_bounds = clone.getBoundingClientRect();
 
       let res_pos = 0;
+      let char_index = 0;
       for (let char of kwd_text_chars){
         const span = window.document.createElement('span');
         span.textContent = char;
         clone_kwd.appendChild(span);
         const span_bounds = span.getBoundingClientRect();
         if (span_bounds.left + span_bounds.width / 2 - clone_bounds.left > rel_x) break;
-        res_pos++;
+        if (!this.separatorComp.inside || !this.separatorComp.before || char_index >= this.separatorComp.text.length){
+          res_pos++;
+        }
+        char_index++;
       }
 
       removeNodeFromDOM(clone);

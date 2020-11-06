@@ -168,8 +168,8 @@ export default class InteractionContext{
         if (!this.component.value || this.component.value.length === 0) return res;
 
         let target = e.target;
-        if (nodeHasClass(target, 'ImsKeywordBox-keyword-delete')){
-            res.delButton = true;
+        res.delButton = nodeHasClass(target, 'ImsKeywordBox-keyword-delete');
+        if (res.delButton || nodeHasClass(target, 'ImsKeywordBox-separator-inside')){
             target = getClosestNodeByClass(target, 'ImsKeywordBox-keyword');
             if (!target) target = e.target;
         }
