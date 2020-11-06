@@ -93,7 +93,6 @@
             background: rgba(255,255,255,0.9);
         }
         .keywordbox{
-            min-height: 100px;
             max-height: 20vh;
             background: #FFF;
         }
@@ -130,6 +129,12 @@
         }
         .ImsKeywordBox-keyword.kwd-len-10{
             background: rgba(255, 35, 35, 0.55);
+        }
+        @media screen and (max-width: 1024px){
+            .keywordbox{
+                max-height: none;
+                height:100px;
+            }
         }
     </style>
 </head>
