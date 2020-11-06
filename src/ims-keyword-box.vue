@@ -34,8 +34,13 @@
             <span style="padding-right: 0.1px">
                 <template v-for="(keyword, keyword_index) in value">
                   <span
-                      :class="separatorIsNewLine ? 'ImsKeywordBox-line' : 'ImsKeywordBox-inline'"
-                    ><template
+                      :class="separatorComp.isNewLine ? 'ImsKeywordBox-line' : 'ImsKeywordBox-inline'"
+                    ><span
+                          v-if="_showBetweenSeparatorBefore(keyword_index)"
+                          class="ImsKeywordBox-separator"
+                          :data-kwd-ind="keyword_index - 1"
+                      >{{ keyword_index === 0 && !separatorComp.inside ? separatorComp.first : separatorComp.between }}</span
+                      ><template
                       v-if="editorPosition === keyword_index"
                       ><ims-keyword-box-editor
                           class="ImsKeywordBox-editor"
@@ -45,10 +50,10 @@
                           ref="editor"
                       ></ims-keyword-box-editor
                       ><span
-                          v-if="!separatorIsNewLine && !editorInstead"
+                          v-if="!separatorComp.isNewLine && !editorInstead"
                           class="ImsKeywordBox-separator"
                           :data-kwd-ind="keyword_index"
-                      >{{ separatorCharacter }}</span
+                      >{{ keyword_index === 0 && !separatorComp.inside && !separatorComp.before ? separatorComp.first : separatorComp.between }}</span
                     ></template
                     ><span
                         v-if="editorPosition !== keyword_index || !editorInstead"
@@ -59,7 +64,11 @@
                         ><span
                           class="ImsKeywordBox-keyword"
                           :class="_getKeywordClasses(keyword, keyword_index)"
-                        >{{ keyword }}<span
+                        ><span v-if="_showInsideSeparatorBefore(keyword_index)"
+                          >{{keyword_index === 0 ? separatorComp.first : separatorComp.text}}</span
+                          >{{ keyword }}<span v-if="_showInsideSeparatorAfter(keyword_index)"
+                          >{{keyword_index === 0 ? separatorComp.first : separatorComp.text}}</span
+                          ><span
                             v-if="showDeleteButton"
                             class="ImsKeywordBox-keyword-delete"
                             @click="deleteKeywordByIndex(keyword_index)"
@@ -67,10 +76,10 @@
                         ></span
                     ></span
                     ><span
-                          v-if="(keyword_index < value.length - 1 || editorPosition === value.length) && !separatorIsNewLine"
+                          v-if="_showBetweenSeparatorAfter(keyword_index)"
                           class="ImsKeywordBox-separator"
                           :data-kwd-ind="keyword_index"
-                    >{{ separatorCharacter }}</span
+                    >{{ keyword_index === 0 && !separatorComp.inside && editorPosition !== keyword_index ? separatorComp.first : separatorComp.between }}</span
                 ></span>
                 </template>
             </span>
@@ -119,7 +128,7 @@ export default {
   props: {
     value: {},
     showDeleteButton: { type: Boolean, default: true },
-    separator: {type: String, default: ', '},
+    separator: {type: [String, Object], default: ', '},
     splittingRegexp: {type: RegExp, default: () => /[;,\r\n]/},
     preprocessKeyword: {type: Function, default: null},
     getKeywordClasses: {type: Function, default: null},
@@ -156,12 +165,27 @@ export default {
         this.cursorPositionAfter = false;
       }
     },
-    separatorIsNewLine() {
-      return this.separator === '\r\n';
-    },
-    separatorCharacter() {
-      return this.separator;
-    },
+    separatorComp(){
+      const res = {
+        isNewLine: false,
+        text: this.separator,
+        inside: false,
+        before: false,
+        first: null,
+        between: null
+      }
+      if (this.separator && typeof this.separator === 'object'){
+        Object.assign(res, this.separator);
+      }
+      res.between = res.inside ? ' ' : res.text;
+      res.isNewLine = res.text === '\r\n';
+      if (res.first === null){
+        res.first = res.text
+        if (res.isNewLine) res.first = '';
+        else if (res.before) res.first = res.first.replace(/^\s+/, '');
+      }
+      return res;
+    }
   },
   methods: {
     /**
@@ -235,7 +259,9 @@ export default {
      */
     getSelectionsAsJoinedString() {
       const sel_arr = this.selectedKeywords.getSelectionAsArray();
-      return sel_arr.join(this.separatorCharacter);
+      let res = sel_arr.join(this.separatorComp.text);
+      if (this.separatorComp.before) res = this.separatorComp.first + res;
+      return res;
     },
     /**
      *  Command "Copy": copies selected keywords to clipboard
@@ -332,7 +358,7 @@ export default {
       const split_norm = [];
       let duplicated = null;
       for (let e = 0; e < split_preproc.length; e++) {
-        const e_norm_val = split_preproc[e];
+        const e_norm_val = this.preprocessKeyword ? split_preproc[e] : split_preproc[e].trim();
         if (!e_norm_val) continue;
 
         if (ins_repeat_check.has(e_norm_val)) continue;
@@ -722,7 +748,7 @@ export default {
         }
         if (print_key && this.cursorPosition === cur_value.length && cur_value.length > 0) {
           if (!this.splittingRegexp || !this.splittingRegexp.test(print_key)) {
-            open_editor_args.appendSeparator = this.separator;
+            open_editor_args.appendSeparator = this.separatorComp.text;
           }
         }
         this.openEditor(open_editor_args);
@@ -860,13 +886,21 @@ export default {
       const is_cursor_after = is_regular_cursor && this.cursorPositionRaw === keyword_index + 1 && (this.value && keyword_index === this.value.length - 1 || this.cursorPositionAfter) ||
           this.dragKeywordPosition === keyword_index && !this.dragKeywordIsBegin;
       const is_duplicated = this.highlightDuplicated && this.highlightDuplicated.hasOwnProperty(keyword);
-      return {
+      const classes =  {
         'state-cursor-before': is_cursor_before,
         'state-cursor-after': is_cursor_after,
         'state-cursor-blink': (is_cursor_before || is_cursor_after) && is_regular_cursor,
         'state-duplicate': is_duplicated,
-        ...(this.getKeywordClasses ? this.getKeywordClasses(keyword, keyword_index) : {})
       }
+      if (this.getKeywordClasses){
+        const user_classes = this.getKeywordClasses(keyword, keyword_index);
+        if (user_classes){
+          if (typeof user_classes === 'string') classes[user_classes] = true;
+          else if (Array.isArray(user_classes)) user_classes.forEach(cl => classes[cl] = true);
+          else Object.assign(classes, user_classes);
+        }
+      }
+      return classes;
     },
     emitValue(value, record = true) {
       if (record && this.historyController){
@@ -929,7 +963,34 @@ export default {
         }
 
       }
-    }
+    },
+    _showBetweenSeparatorBefore(keyword_index){
+      if (!this.value) return false;
+      if (this.separatorComp.isNewLine) return false;
+      if (!this.separatorComp.before || (keyword_index === 0 && this.separatorComp.inside)) return false;
+      return true;
+    },
+    _showBetweenSeparatorAfter(keyword_index){
+      if (!this.value) return false;
+      if (this.separatorComp.isNewLine) return false;
+      const last_is_editing = this.editorPosition === this.value.length;
+      if (this.separatorComp.before && !(last_is_editing && keyword_index === this.value.length - 1)) return false;
+      return (keyword_index < this.value.length - 1 || last_is_editing);
+    },
+    _showInsideSeparatorBefore(keyword_index){
+      if (!this.value) return false;
+      if (this.separatorComp.isNewLine) return false;
+      if (!this.separatorComp.inside) return false;
+      if (!this.separatorComp.before) return false;
+      return true;
+    },
+    _showInsideSeparatorAfter(keyword_index){
+      if (!this.value) return false;
+      if (this.separatorComp.isNewLine) return false;
+      if (!this.separatorComp.inside) return false;
+      if (this.separatorComp.before) return false;
+      return true;
+    },
 
   },
   created(){
