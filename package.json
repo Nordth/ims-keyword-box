@@ -1,6 +1,6 @@
 {
   "name": "ims-keyword-box",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Vue.js tag/keyword editing component",
   "homepage": "https://nordth.github.io/ims-keyword-box/",
   "private": false,
@@ -28,8 +28,7 @@
     "build:es": "cross-env NODE_ENV=production rollup --config build/rollup.config.js --format es",
     "build:unpkg": "cross-env NODE_ENV=production rollup --config build/rollup.config.js --format iife"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.5",
