@@ -1033,14 +1033,17 @@ export default {
 .ImsKeywordBox {
   border: 1px solid #CCC;
   border-radius: 4px;
-  overflow: auto;
   position: relative;
-  padding: 0 6px;
   cursor: text;
 }
 
 .ImsKeywordBox-scroller {
+  padding: 0 6px;
   height: 100%;
+  max-height: inherit;
+  min-height: inherit;
+  border-radius: inherit;
+  overflow: auto;
   overflow-x: hidden;
   position: relative;
 }
