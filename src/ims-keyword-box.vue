@@ -120,10 +120,10 @@ export default {
     value: {},
     showDeleteButton: { type: Boolean, default: true },
     separator: {type: String, default: ', '},
-    preprocessKeyword: {type: Function, default: null},
-    scrollY: {type: Number, default: 0},
     splittingRegexp: {type: RegExp, default: () => /[;,\r\n]/},
+    preprocessKeyword: {type: Function, default: null},
     getKeywordClasses: {type: Function, default: null},
+    scrollY: {type: Number, default: 0},
     handleExceptions: {type: Function, default: null},
     emitValueEvent: {type: String, default: 'input',},
     customizeMultiKeywordDraggingCanvas: { type: Function, default: null },
@@ -311,14 +311,28 @@ export default {
       if (cursor < 0) cursor = 0;
       if (!cur_value) cur_value = [];
       const original_value = cur_value;
+      const split = this.splittingRegexp ? text.split(this.splittingRegexp) : [text];
 
+      // Preprocess keywords
+      let split_preproc = split;
+      if (this.preprocessKeyword){
+        split_preproc = [];
+        for (let e = 0; e < split.length; e++) {
+          const e_norm_val = this.preprocessKeyword(split[e]);
+          if (e_norm_val) {
+            if (Array.isArray(e_norm_val)) split_preproc = split_preproc.concat(e_norm_val);
+            else split_preproc.push(e_norm_val);
+          }
+        }
+      }
+
+      // Check duplication
       const exist_set = new Set(original_value);
       const ins_repeat_check = new Set();
-      const split = text.split(this.splittingRegexp);
       const split_norm = [];
       let duplicated = null;
-      for (let e = 0; e < split.length; e++) {
-        const e_norm_val = this.preprocessKeyword ? this.preprocessKeyword(split[e]) : split[e];
+      for (let e = 0; e < split_preproc.length; e++) {
+        const e_norm_val = split_preproc[e];
         if (!e_norm_val) continue;
 
         if (ins_repeat_check.has(e_norm_val)) continue;
@@ -338,6 +352,7 @@ export default {
         split_norm.push(e_norm_val);
       }
 
+      // Set value
       this.selectedKeywords.clear();
       this.cursorPosition = cursor + split_norm.length;
       this.selectedKeywords.lastActiveKeywordIndex = this.cursorPosition;
@@ -348,6 +363,7 @@ export default {
         else this.emitValue(new_value);
       }
 
+      // Highlight duplicated
       if (duplicated) {
         if (!this.highlightDuplicated) {
           this.highlightDuplicated = duplicated;
