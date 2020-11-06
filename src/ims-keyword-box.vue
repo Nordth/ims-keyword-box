@@ -1109,6 +1109,7 @@ export default {
   left: 0;
   color: transparent;
   outline: none;
+  opacity: 0.01;
 }
 
 .ImsKeywordBox-textarea::-moz-selection,
