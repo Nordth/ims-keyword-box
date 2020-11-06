@@ -11,6 +11,8 @@
             font-family: sans-serif;
             background: #3eaf7c;
             margin: 0;
+            font-size: 16px;
+            line-height: 22px;
         }
         #app{
             background: #FFF;
@@ -28,6 +30,69 @@
             font-size: 14px;
             margin-top: 10px;
         }
+
+        .prop-table-zone{
+            overflow-x: auto;
+        }
+        .prop-table{
+            border-collapse: collapse;
+            width:100%;
+        }
+        .prop-table td,
+        .prop-table th{
+            border: 1px solid #ccc;
+            padding: 10px 15px;
+            text-align: left;
+            vertical-align: top;
+        }
+        .prop-table-col-desc{
+            width:50%;
+        }
+        .prop-table-col-val{
+            width: 35%;
+        }
+        .prop-input.state-invalid{
+            border-color:red;
+        }
+        .prop-type,
+        .prop-note{
+            color:#3eaf7c
+        }
+        .prop-func-variants{
+            margin: 0;
+            padding-left: 20px;
+        }
+        .prop-func-variants>li{
+            margin-bottom: 10px;
+        }
+        .prop-func-variants>li:last-child{
+            margin-bottom: 0px;
+        }
+        .prop-func-variants-caption{
+            color:#3eaf7c
+        }
+        .prop-code{
+            display: block;
+            background: #EEE;
+            white-space: pre;
+            margin-top: 20px;
+            padding: 5px;
+            font-family: monospace;
+        }
+        .prop-field{
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .keywordbox-zone{
+            padding: 10px 0;
+            position: sticky;
+            top:0;
+            background: rgba(255,255,255,0.9);
+        }
+        .keywordbox{
+            max-height: 20vh;
+            background: #FFF;
+        }
     </style>
 </head>
 <body>
@@ -36,15 +101,246 @@
             ImsKeywordBox demo
             <div class="header-sub">Vue.js keyword/tag editor component</div>
         </h1>
-        <ims-keyword-box
-            v-model="keywords"
-        ></ims-keyword-box>
+        <div class="keywordbox-zone">
+            <ims-keyword-box
+                class="keywordbox"
+                v-model="keywords"
+                :show-delete-button="showDeleteButton"
+                :separator="separator"
+                :splitting-regexp="splittingRegexpRes.regExp"
+                :preprocess-keyword="preprocessKeyword"
+            ></ims-keyword-box>
+        </div>
+        <h2 class="header">Properties</h2>
+        <div class="prop-table-zone">
+
+            <table class="prop-table">
+                <tr>
+                    <th class="prop-table-col-name">value</th>
+                    <td class="prop-table-col-desc">Current value of input (v-model). <i class="prop-type">Array of strings or null</i></td>
+                    <td class="prop-table-col-val">{{keywords}}</td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">showDeleteButton</th>
+                    <td class="prop-table-col-desc">Show button (×) to delete keyword. <i class="prop-type">Boolean</i></td>
+                    <td class="prop-table-col-val"><input class="prop-input" type="checkbox" v-model="showDeleteButton"></td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">separator</th>
+                    <td class="prop-table-col-desc">
+                        Symbol between keywords. <i class="prop-type">String or Object</i><br>
+                        <br>
+                        If object provided it can has following fields:<br>
+                        <br>
+                        <ul class="prop-func-variants">
+                            <li>
+                                <span class="prop-func-variants-caption">text</span> separator character(s). <i class="prop-type">String</i>
+                            </li>
+                            <li>
+                                <span class="prop-func-variants-caption">before</span> put separator before keyword. Default false. <i class="prop-type">Boolean</i>
+                            </li>
+                            <li>
+                                <span class="prop-func-variants-caption">inside</span> put separator inside keyword. Default false. <i class="prop-type">Boolean</i>
+                            </li>
+                            <li>
+                                <span class="prop-func-variants-caption">first</span> different separator for first keyword. <i class="prop-type">String</i>
+                            </li>
+                            <li>
+                                <span class="prop-func-variants-caption">between</span> when `separator.inside` is true allow to specify characters between keywords. <i class="prop-type">String</i>
+                            </li>
+                        </ul><br>
+                        <span class="prop-note">Tip:</span> to put each keyword on its own line, set '\r\n' as the separator value
+                    </td>
+                    <td class="prop-table-col-val">
+                        <label class="prop-field">Text:<input class="prop-input" style="width: 40px" type="input" v-model="separator.text"></label>
+                        <label class="prop-field">Before:<input class="prop-input" type="checkbox" v-model="separator.before"></label>
+                        <label class="prop-field">Inside:<input class="prop-input" type="checkbox" v-model="separator.inside"></label>
+                        <label class="prop-field">Between:<input class="prop-input" style="width: 40px" type="input" v-model="separatorBetween" :disabled="separatorBetweenDisabled"></label>
+                        <br>
+                        <br>
+                        Presets:<br>
+                        <button @click="setSeparatorTextOnly(', ')">Comma (default)</button>
+                        <button @click="setSeparatorTextOnly('; ')">Semicolon</button>
+                        <button @click="setSeparatorTextOnly('\r\n')">New line</button>
+                        <button @click="setSeparatorHashTags()">Hash tags</button>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">splittingRegexp</th>
+                    <td class="prop-table-col-desc">
+                        RegExp to split entered or pasted text. <i class="prop-type">RegExp</i><br>
+                        <br>
+                        <span class="prop-note">Note:</span> if <i>null</i> provided, entered text will be not splitted automatically, but you can provide your own splitting logic using <i>`preprocessKeyword`</i> property
+                    </td>
+                    <td class="prop-table-col-val">
+                        <input
+                                class="prop-input"
+                                :class="{'state-invalid': !splittingRegexpRes.valid}"
+                                type="input"
+                                v-model.lazy="splittingRegexpText"
+                                :title="splittingRegexpRes.valid ? '' : 'Enter valid regExp'"
+                        >
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">preprocessKeyword</th>
+                    <td class="prop-table-col-desc">Allows you to specify the function that will change the entered keywords before emitting new value. <i class="prop-type">Function</i><br>
+                        <br>
+                        <ul class="prop-func-variants">
+                            <li>
+                                <span class="prop-func-variants-caption">(string keyword) => string:</span>
+                                receives original keyword and returns the transformed one. If function returns empty keyword, it will be not added
+                            </li>
+                            <li>
+                                <span class="prop-func-variants-caption">(string keyword) => string[]:</span>
+                                receives original keyword, returns an array of keywords that should be inserted instead of it
+                            </li>
+                        </ul>
+                        <br>
+                        <span class="prop-note">Note:</span> this affects only new entered/pasted text
+                    </td>
+                    <td class="prop-table-col-val">
+                        <select
+                                class="prop-input"
+                                v-model="preprocessKeyword"
+                        >
+                            <option v-for="opt in preprocessKeywordOptions" :value="opt.value">
+                                {{opt.title}}
+                            </option>
+                        </select>
+                        <code class="prop-code" v-if="preprocessKeyword">{{displayFunc(preprocessKeyword)}}</code>
+                    </td>
+                </tr>
+            </table>
+        </div>
     </div>
     <script>
         const app = new Vue({
             el: '#app',
             data: {
-                keywords: ["apple","red","delicious","food","fruit","isolated","healthy","nutritious","organic","ripe","sweet"]
+                keywords: ["apple","red","delicious","food","fruit","isolated","healthy","nutritious","organic","ripe","sweet"],
+                showDeleteButton: true,
+                separator: {
+                    text: ', ',
+                    before: false,
+                    inside: false,
+                    between: null
+                },
+                splittingRegexpText: /[;,\r\n#]/.source,
+                preprocessKeyword: null,
+                preprocessKeywordOptions: [
+                    {
+                        title: 'None (trim keywords)',
+                        value: null
+                    },
+                    {
+                        title: 'Convert to lowercase and trim',
+                        value: (keyword) => {
+                            return keyword.toLowerCase().trim();
+                        }
+                    },
+                    {
+                        title: 'Split keywords longer than 5 characters',
+                        value: (keyword) => {
+                            const max_word = 5;
+                            if (keyword.length <= max_word) return keyword;
+                            const splitted = [];
+                            while (keyword.length > max_word){
+                                splitted.push(keyword.substring(0, max_word));
+                                keyword = keyword.substring(max_word);
+                            }
+                            splitted.push(keyword);
+                            return splitted;
+                        }
+                    },
+                ],
+                getKeywordClasses: null,
+                getKeywordClassesOptions: [
+                    {
+                        title: 'None',
+                        value: null
+                    },
+                    {
+                        title: '',
+                        value: (keyword) => {
+                            return keyword.toLowerCase();
+                        }
+                    },
+                    {
+                        title: 'Split keywords longer than 5 characters',
+                        value: (keyword) => {
+                            const max_word = 5;
+                            if (keyword.length <= max_word) return keyword;
+                            const splitted = [];
+                            while (keyword.length > max_word){
+                                splitted.push(keyword.substring(0, max_word));
+                                keyword = keyword.substring(max_word);
+                            }
+                            splitted.push(keyword);
+                            return splitted;
+                        }
+                    },
+                ],
+            },
+            computed:{
+                splittingRegexpRes(){
+                    try{
+                        const regExp = this.splittingRegexpText ? new RegExp(this.splittingRegexpText) : null;
+                        return {
+                            regExp,
+                            valid: true
+                        }
+                    }
+                    catch (err){
+                        return {
+                            regExp: null,
+                            valid: false
+                        }
+                    }
+                },
+                separatorBetween:{
+                    get(){
+                        return this.separator.between;
+                    },
+                    set(val){
+                        this.separator.between = val ? val : null;
+                    }
+                },
+                separatorBetweenDisabled(){
+                    return !this.separator.inside;
+                }
+            },
+            methods:{
+                displayFunc(func){
+                    if (!func) return null;
+                    const func_code_lines = func.toString().split("\n");
+                    let min_spaces = null;
+                    func_code_lines.forEach((line, index) => {
+                        if (index === 0) return;
+                        const not_space = line.match(/\S/);
+                        if (not_space) {
+                            if (min_spaces === null || min_spaces > not_space.index){
+                                min_spaces = not_space.index;
+                            }
+                        }
+                    })
+                    return func_code_lines.map((line, index) => {
+                        if (index === 0) return line;
+                        return line.substring(min_spaces);
+                    }).join("\n");
+                },
+                setSeparatorTextOnly(val){
+                    this.separator.text = val;
+                    this.separator.before = false;
+                    this.separator.inside = false;
+                    this.separator.between = null;
+                },
+                setSeparatorHashTags(){
+                    this.separator.text = '#';
+                    this.separator.before = true;
+                    this.separator.inside = true;
+                    this.separator.between = ', ';
+                }
             }
         })
     </script>
