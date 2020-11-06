@@ -1011,7 +1011,10 @@ export default {
         this.deleteKeywordByIndex(keyword_index);
         this.confirmDeleteIndex = null;
       }
-      else this.confirmDeleteIndex = keyword_index;
+      else {
+        this.confirmDeleteIndex = keyword_index;
+        this.selectedKeywords.setSelectedStateByIndex(keyword_index, true);
+      }
     }
 
   },
