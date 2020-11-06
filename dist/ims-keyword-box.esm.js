@@ -1062,8 +1062,8 @@ var __vue_staticRenderFns__ = [];
 
 const __vue_inject_styles__ = function (inject) {
   if (!inject) return;
-  inject("data-v-207ef990_0", {
-    source: ".ImsKeywordBoxEditor{position:relative;display:inline-block}.ImsKeywordBoxEditor-hidden,.ImsKeywordBoxEditor-input{outline:0;border:none;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;display:block;padding:0;background:0 0}.ImsKeywordBoxEditor-hidden{position:absolute;top:0;left:0;visibility:hidden;box-sizing:content-box;padding-right:5px}",
+  inject("data-v-4eaaae34_0", {
+    source: ".ImsKeywordBoxEditor{position:relative;display:inline-block}.ImsKeywordBoxEditor-hidden,.ImsKeywordBoxEditor-input{outline:0;border:none;font-size:inherit;font-family:inherit;line-height:inherit;white-space:pre;display:block;padding:0;background:0 0;-webkit-text-size-adjust:none;text-size-adjust:none}.ImsKeywordBoxEditor-hidden{position:absolute;top:0;left:0;visibility:hidden;box-sizing:content-box;padding-right:5px}",
     map: undefined,
     media: undefined
   });

@@ -143,6 +143,8 @@ export default {
   display: block;
   padding: 0;
   background: transparent;
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
 }
 
 .ImsKeywordBoxEditor-hidden{
