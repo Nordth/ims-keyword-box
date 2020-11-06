@@ -54,6 +54,9 @@
         .prop-input.state-invalid{
             border-color:red;
         }
+        .prop-type{
+            font-style: italic;
+        }
         .prop-type,
         .prop-note{
             color:#3eaf7c
@@ -94,7 +97,7 @@
             background: #FFF;
         }
         .ImsKeywordBox-keyword.kwd-highlight{
-            color: #8703cf;
+            color: #cf0303;
             font-weight: bold;
         }
         .ImsKeywordBox-keyword.kwd-len-1{
@@ -144,6 +147,7 @@
                 :splitting-regexp="splittingRegexpRes.regExp"
                 :preprocess-keyword="preprocessKeyword"
                 :get-keyword-classes="getKeywordClasses"
+                :scroll-y.sync="scrollY"
             ></ims-keyword-box>
         </div>
         <h2 class="header">Properties</h2>
@@ -187,10 +191,10 @@
                         <span class="prop-note">Tip:</span> to put each keyword on its own line, set '\r\n' as the separator value
                     </td>
                     <td class="prop-table-col-val">
-                        <label class="prop-field">Text:<input class="prop-input" style="width: 40px" type="input" v-model="separator.text"></label>
+                        <label class="prop-field">Text:<input class="prop-input" style="width: 40px" type="text" v-model="separator.text"></label>
                         <label class="prop-field">Before:<input class="prop-input" type="checkbox" v-model="separator.before"></label>
                         <label class="prop-field">Inside:<input class="prop-input" type="checkbox" v-model="separator.inside"></label>
-                        <label class="prop-field">Between:<input class="prop-input" style="width: 40px" type="input" v-model="separatorBetween" :disabled="separatorBetweenDisabled"></label>
+                        <label class="prop-field">Between:<input class="prop-input" style="width: 40px" type="text" v-model="separatorBetween" :disabled="separatorBetweenDisabled"></label>
                         <br>
                         <br>
                         Presets:<br>
@@ -211,7 +215,7 @@
                         <input
                                 class="prop-input"
                                 :class="{'state-invalid': !splittingRegexpRes.valid}"
-                                type="input"
+                                type="text"
                                 v-model.lazy="splittingRegexpText"
                                 :title="splittingRegexpRes.valid ? '' : 'Enter valid regExp'"
                         >
@@ -267,6 +271,70 @@
                             </option>
                         </select>
                         <code class="prop-code" v-if="getKeywordClasses">{{displayFunc(getKeywordClasses)}}</code>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">scrollY</th>
+                    <td class="prop-table-col-desc">
+                        Allows to control vertical scroll position. You can set and get value (using `scroll-y.sync`). <i class="prop-type">Number</i>
+                    </td>
+                    <td class="prop-table-col-val">
+                        <input
+                                class="prop-input"
+                                type="number"
+                                v-model="scrollY"
+                        ><br>
+                        <br>
+                        <button @click="addRandomKeywords(50)">Add many keywords</button>
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">handleExceptions</th>
+                    <td class="prop-table-col-desc">
+                        Allows to set handler for unhandled exceptions. <i class="prop-type">Function</i><br>
+                        <br>
+                        <ul class="prop-func-variants">
+                            <li>
+                                <span class="prop-func-variants-caption">(Error error) => boolean:</span>
+                                should return true if exceptions is handled
+                            </li>
+                        </ul>
+                    </td>
+                    <td class="prop-table-col-val">
+                        Will output to the console by default
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">emitValueEvent</th>
+                    <td class="prop-table-col-desc">
+                        Allow to change the name of event that will be emitted when user changes value <i class="prop-type">Function</i>
+                    </td>
+                    <td class="prop-table-col-val">
+                        <i>`input`</i> by default
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">customizeMultiKeyword&shy;DraggingCanvas</th>
+                    <td class="prop-table-col-desc">
+                        Allow to customize drag image for multi keyword dragging. <i class="prop-type">Function</i><br>
+                        <br>
+                        <ul class="prop-func-variants">
+                            <li>
+                                <span class="prop-func-variants-caption">(Canvas canvas, string[] dragging_keywords) => void</span>
+                            </li>
+                        </ul>
+                    </td>
+                    <td class="prop-table-col-val">
+                        -
+                    </td>
+                </tr>
+                <tr>
+                    <th class="prop-table-col-name">historyController</th>
+                    <td class="prop-table-col-desc">
+                        Allow to customize undo/redo handling. <a href="https://github.com/Nordth/ims-keyword-box/blob/main/src/controllers/history-controller.js" target="_blank" class="prop-type">HistoryController</a>
+                    </td>
+                    <td class="prop-table-col-val">
+                        -
                     </td>
                 </tr>
             </table>
@@ -331,7 +399,18 @@
                             return keyword_index < 5 ? 'kwd-highlight' : null
                         }
                     },
+                    {
+                        title: 'Both',
+                        value: (keyword, keyword_index) => {
+                            const len_code = Math.min(keyword.length, 10);
+                            return {
+                                'kwd-highlight': keyword_index < 5,
+                                ['kwd-len-' + len_code]: true
+                            }
+                        }
+                    },
                 ],
+                scrollY: 0
             },
             computed:{
                 splittingRegexpRes(){
@@ -391,6 +470,13 @@
                     this.separator.before = true;
                     this.separator.inside = true;
                     this.separator.between = ', ';
+                },
+                addRandomKeywords(count){
+                    const new_val = this.keywords ? [...this.keywords] : [];
+                    for (let i = 0; i < count; i++){
+                        new_val.push('keyword ' + Math.round(Math.random() * 1000));
+                    }
+                    this.keywords = new_val;
                 }
             }
         })
