@@ -266,25 +266,26 @@ export default {
     /**
      *  Command "Copy": copies selected keywords to clipboard
      */
-    async copyCommand() {
-      try {
-        if (this.selectedKeywords.count > 0) {
-          await clipboardCopyPlainText(this.getSelectionsAsJoinedString())
-        }
-      } catch (err) {
-        if (!this.handleExceptions || !this.handleExceptions(err)) {
-          throw err;
-        }
+    copyCommand() {
+      if (this.selectedKeywords.count > 0) {
+        return clipboardCopyPlainText(this.getSelectionsAsJoinedString()).then(null, err =>{
+          if (!this.handleExceptions || !this.handleExceptions(err)) {
+            throw err;
+          }
+        })
       }
+      else return Promise.resolve();
     },
     /**
      *  Command "Cut": copies selected keywords to clipboard
      */
-    async cutCommand() {
+    cutCommand() {
       if (this.selectedKeywords.count > 0) {
-        await this.copyCommand();
-        this.deleteSelectedKeywords();
+        return this.copyCommand().then(() => {
+          this.deleteSelectedKeywords();
+        })
       }
+      else return Promise.resolve();
     },
     /**
      *  Command "Paste": paste text instead of selected keywords

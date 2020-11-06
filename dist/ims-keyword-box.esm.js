@@ -721,10 +721,8 @@ function getCodeFromKeyboardEvent(event) {
   return code_map.hasOwnProperty(event.which) ? code_map[event.which] : null;
 }
 
-async function clipboardCopyPlainText(str) {
-  try {
-    return await navigator.clipboard.writeText(str);
-  } catch (err) {
+function clipboardCopyPlainText(str) {
+  return navigator.clipboard.writeText(str).then(null, err => {
     // Fallback method
     const fallback_area = document.createElement("textarea");
     fallback_area.style.position = "fixed";
@@ -738,7 +736,7 @@ async function clipboardCopyPlainText(str) {
     fallback_area.setSelectionRange(0, fallback_area.value.length);
     document.execCommand("copy");
     document.body.removeChild(fallback_area);
-  }
+  });
 }
 
 //
@@ -1183,7 +1181,7 @@ var script$1 = {
       default: true
     },
     separator: {
-      type: String,
+      type: [String, Object],
       default: ', '
     },
     splittingRegexp: {
@@ -1251,12 +1249,29 @@ var script$1 = {
 
     },
 
-    separatorIsNewLine() {
-      return this.separator === '\r\n';
-    },
+    separatorComp() {
+      const res = {
+        isNewLine: false,
+        text: this.separator,
+        inside: false,
+        before: false,
+        first: null,
+        between: null
+      };
 
-    separatorCharacter() {
-      return this.separator;
+      if (this.separator && typeof this.separator === 'object') {
+        Object.assign(res, this.separator);
+      }
+
+      res.between = res.inside ? ' ' : res.text;
+      res.isNewLine = res.text === '\r\n';
+
+      if (res.first === null) {
+        res.first = res.text;
+        if (res.isNewLine) res.first = '';else if (res.before) res.first = res.first.replace(/^\s+/, '');
+      }
+
+      return res;
     }
 
   },
@@ -1342,32 +1357,33 @@ var script$1 = {
      */
     getSelectionsAsJoinedString() {
       const sel_arr = this.selectedKeywords.getSelectionAsArray();
-      return sel_arr.join(this.separatorCharacter);
+      let res = sel_arr.join(this.separatorComp.text);
+      if (this.separatorComp.before) res = this.separatorComp.first + res;
+      return res;
     },
 
     /**
      *  Command "Copy": copies selected keywords to clipboard
      */
-    async copyCommand() {
-      try {
-        if (this.selectedKeywords.count > 0) {
-          await clipboardCopyPlainText(this.getSelectionsAsJoinedString());
-        }
-      } catch (err) {
-        if (!this.handleExceptions || !this.handleExceptions(err)) {
-          throw err;
-        }
-      }
+    copyCommand() {
+      if (this.selectedKeywords.count > 0) {
+        return clipboardCopyPlainText(this.getSelectionsAsJoinedString()).then(null, err => {
+          if (!this.handleExceptions || !this.handleExceptions(err)) {
+            throw err;
+          }
+        });
+      } else return Promise.resolve();
     },
 
     /**
      *  Command "Cut": copies selected keywords to clipboard
      */
-    async cutCommand() {
+    cutCommand() {
       if (this.selectedKeywords.count > 0) {
-        await this.copyCommand();
-        this.deleteSelectedKeywords();
-      }
+        return this.copyCommand().then(() => {
+          this.deleteSelectedKeywords();
+        });
+      } else return Promise.resolve();
     },
 
     /**
@@ -1446,7 +1462,7 @@ var script$1 = {
       let duplicated = null;
 
       for (let e = 0; e < split_preproc.length; e++) {
-        const e_norm_val = split_preproc[e];
+        const e_norm_val = this.preprocessKeyword ? split_preproc[e] : split_preproc[e].trim();
         if (!e_norm_val) continue;
         if (ins_repeat_check.has(e_norm_val)) continue;
         ins_repeat_check.add(e_norm_val);
@@ -1866,7 +1882,7 @@ var script$1 = {
 
         if (print_key && this.cursorPosition === cur_value.length && cur_value.length > 0) {
           if (!this.splittingRegexp || !this.splittingRegexp.test(print_key)) {
-            open_editor_args.appendSeparator = this.separator;
+            open_editor_args.appendSeparator = this.separatorComp.text;
           }
         }
 
@@ -2122,6 +2138,37 @@ var script$1 = {
             break;
           }
       }
+    },
+
+    _showBetweenSeparatorBefore(keyword_index) {
+      if (!this.value) return false;
+      if (this.separatorComp.isNewLine) return false;
+      if (!this.separatorComp.before || keyword_index === 0 && this.separatorComp.inside) return false;
+      return true;
+    },
+
+    _showBetweenSeparatorAfter(keyword_index) {
+      if (!this.value) return false;
+      if (this.separatorComp.isNewLine) return false;
+      const last_is_editing = this.editorPosition === this.value.length;
+      if (this.separatorComp.before && !(last_is_editing && keyword_index === this.value.length - 1)) return false;
+      return keyword_index < this.value.length - 1 || last_is_editing;
+    },
+
+    _showInsideSeparatorBefore(keyword_index) {
+      if (!this.value) return false;
+      if (this.separatorComp.isNewLine) return false;
+      if (!this.separatorComp.inside) return false;
+      if (!this.separatorComp.before) return false;
+      return true;
+    },
+
+    _showInsideSeparatorAfter(keyword_index) {
+      if (!this.value) return false;
+      if (this.separatorComp.isNewLine) return false;
+      if (!this.separatorComp.inside) return false;
+      if (this.separatorComp.before) return false;
+      return true;
     }
 
   },
@@ -2210,8 +2257,13 @@ var __vue_render__$1 = function () {
     }
   }, [_vm._l(_vm.value, function (keyword, keyword_index) {
     return [_c('span', {
-      class: _vm.separatorIsNewLine ? 'ImsKeywordBox-line' : 'ImsKeywordBox-inline'
-    }, [_vm.editorPosition === keyword_index ? [_c('ims-keyword-box-editor', {
+      class: _vm.separatorComp.isNewLine ? 'ImsKeywordBox-line' : 'ImsKeywordBox-inline'
+    }, [_vm._showBetweenSeparatorBefore(keyword_index) ? _c('span', {
+      staticClass: "ImsKeywordBox-separator",
+      attrs: {
+        "data-kwd-ind": keyword_index - 1
+      }
+    }, [_vm._v(_vm._s(keyword_index === 0 && !_vm.separatorComp.inside ? _vm.separatorComp.first : _vm.separatorComp.between))]) : _vm._e(), _vm.editorPosition === keyword_index ? [_c('ims-keyword-box-editor', {
       ref: "editor",
       refInFor: true,
       staticClass: "ImsKeywordBox-editor",
@@ -2226,12 +2278,12 @@ var __vue_render__$1 = function () {
         },
         expression: "editorValue"
       }
-    }), !_vm.separatorIsNewLine && !_vm.editorInstead ? _c('span', {
+    }), !_vm.separatorComp.isNewLine && !_vm.editorInstead ? _c('span', {
       staticClass: "ImsKeywordBox-separator",
       attrs: {
         "data-kwd-ind": keyword_index
       }
-    }, [_vm._v(_vm._s(_vm.separatorCharacter))]) : _vm._e()] : _vm._e(), _vm.editorPosition !== keyword_index || !_vm.editorInstead ? _c('span', {
+    }, [_vm._v(_vm._s(keyword_index === 0 && !_vm.separatorComp.inside && !_vm.separatorComp.before ? _vm.separatorComp.first : _vm.separatorComp.between))]) : _vm._e()] : _vm._e(), _vm.editorPosition !== keyword_index || !_vm.editorInstead ? _c('span', {
       staticClass: "ImsKeywordBox-keyword-wrapper",
       class: {
         'state-highlighted': _vm.selectedKeywords.isSelected(keyword)
@@ -2243,19 +2295,19 @@ var __vue_render__$1 = function () {
     }, [_c('span', {
       staticClass: "ImsKeywordBox-keyword",
       class: _vm._getKeywordClasses(keyword, keyword_index)
-    }, [_vm._v(_vm._s(keyword)), _vm.showDeleteButton ? _c('span', {
+    }, [_vm._showInsideSeparatorBefore(keyword_index) ? _c('span', [_vm._v(_vm._s(keyword_index === 0 ? _vm.separatorComp.first : _vm.separatorComp.text))]) : _vm._e(), _vm._v(_vm._s(keyword)), _vm._showInsideSeparatorAfter(keyword_index) ? _c('span', [_vm._v(_vm._s(keyword_index === 0 ? _vm.separatorComp.first : _vm.separatorComp.text))]) : _vm._e(), _vm.showDeleteButton ? _c('span', {
       staticClass: "ImsKeywordBox-keyword-delete",
       on: {
         "click": function ($event) {
           return _vm.deleteKeywordByIndex(keyword_index);
         }
       }
-    }) : _vm._e()])]) : _vm._e(), (keyword_index < _vm.value.length - 1 || _vm.editorPosition === _vm.value.length) && !_vm.separatorIsNewLine ? _c('span', {
+    }) : _vm._e()])]) : _vm._e(), _vm._showBetweenSeparatorAfter(keyword_index) ? _c('span', {
       staticClass: "ImsKeywordBox-separator",
       attrs: {
         "data-kwd-ind": keyword_index
       }
-    }, [_vm._v(_vm._s(_vm.separatorCharacter))]) : _vm._e()], 2)];
+    }, [_vm._v(_vm._s(keyword_index === 0 && !_vm.separatorComp.inside && _vm.editorPosition !== keyword_index ? _vm.separatorComp.first : _vm.separatorComp.between))]) : _vm._e()], 2)];
   })], 2)] : [_c('div', {
     staticClass: "ImsKeywordBox-stub",
     class: {
@@ -2284,7 +2336,7 @@ var __vue_staticRenderFns__$1 = [];
 
 const __vue_inject_styles__$1 = function (inject) {
   if (!inject) return;
-  inject("data-v-14ed41d5_0", {
+  inject("data-v-e1e5f418_0", {
     source: ".ImsKeywordBox{border:1px solid #ccc;border-radius:4px;overflow:auto;position:relative;padding:0 6px;cursor:text}.ImsKeywordBox-scroller{height:100%;overflow-x:hidden;position:relative}.ImsKeywordBox-canvas{display:block;padding:4px 4px 4px 4px;line-height:2em;position:relative;user-select:none;outline:0;min-height:100%;box-sizing:border-box}.ImsKeywordBox-keyword-wrapper{white-space:nowrap;display:inline-block}.ImsKeywordBox-keyword-wrapper.state-highlighted{position:relative}.ImsKeywordBox-keyword-wrapper.state-highlighted>.ImsKeywordBox-keyword{cursor:text}.ImsKeywordBox-keyword-wrapper.state-highlighted:before{content:\"\";position:absolute;width:100%;height:2em;background:#e9e9e9;left:-4px;top:0;padding-left:4px;padding-right:5px}.ImsKeywordBox.state-focus .ImsKeywordBox-scroller>.ImsKeywordBox-canvas .ImsKeywordBox-keyword-wrapper.state-highlighted:before{background:#d7d4f0}.ImsKeywordBox-keyword-wrapper.state-highlighted{background:#faa}.ImsKeywordBox-textarea{width:0;height:0;overflow:hidden;padding:0;display:block;resize:none;position:absolute;background:0 0;border:none;top:0;left:0;color:transparent;outline:0}.ImsKeywordBox-textarea::-moz-selection,.ImsKeywordBox-textarea::selection{color:transparent}.ImsKeywordBox-keyword{padding:2px 7px;border:1px solid #ccc;border-radius:4px;line-height:1.4em;display:inline-block;white-space:nowrap;cursor:default;background-color:rgba(250,250,250,.7);position:relative}.ImsKeywordBox-keyword.state-cursor-after:after,.ImsKeywordBox-keyword.state-cursor-before:after,.ImsKeywordBox-stub.state-cursor-after:after,.ImsKeywordBox-stub.state-cursor-before:after{content:\"\";display:block;width:1px;height:29px;background:#000;position:absolute;top:-2px;pointer-events:none}.ImsKeywordBox-keyword.state-cursor-after.state-cursor-blink:after,.ImsKeywordBox-keyword.state-cursor-before.state-cursor-blink:after,.ImsKeywordBox-stub.state-cursor-after.state-cursor-blink:after,.ImsKeywordBox-stub.state-cursor-before.state-cursor-blink:after{animation:ImsKeywordBox-cursor-blink .5s infinite alternate}.ImsKeywordBox-keyword.state-cursor-before:after,.ImsKeywordBox-stub.state-cursor-before:after{left:-5px}.ImsKeywordBox-keyword.state-cursor-after:after{right:-6px}.ImsKeywordBox-keyword.state-duplicate{background-color:#ff9c9c}.ImsKeywordBox-stub{display:inline-block;width:1px;height:1.4em;position:relative}.ImsKeywordBox-stub.state-cursor-after:after{right:0}.ImsKeywordBox-separator{position:relative;display:inline-block;white-space:pre}.ImsKeywordBox-separator:first-child,.ImsKeywordBox-separator:last-child{color:#aaa}.ImsKeywordBox-line{display:block}.ImsKeywordBox-keyword-delete{background:url(\"data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m18.011 3.8674-6.0106 6.0106-6.0106-6.0106-2.1212 2.1212 6.0106 6.0106-6.0106 6.0106 2.1212 2.1212 6.0106-6.0106 6.0106 6.0106 2.1212-2.1212-6.0106-6.0106 6.0106-6.0106z'/%3E%3C/svg%3E%0A\") no-repeat right center;display:inline-block;width:12px;height:12px;cursor:pointer;background-size:contain;opacity:.5;position:relative;top:1px;margin-left:4px}.ImsKeywordBox-keyword-delete:hover{opacity:1}@keyframes ImsKeywordBox-cursor-blink{0%{opacity:1}49.9%{opacity:1}50%{opacity:0}100%{opacity:0}}",
     map: undefined,
     media: undefined

@@ -1,8 +1,5 @@
-export async function clipboardCopyPlainText(str){
-    try{
-        return await navigator.clipboard.writeText(str);
-    }
-    catch (err){
+export function clipboardCopyPlainText(str){
+    return navigator.clipboard.writeText(str).then(null, err => {
         // Fallback method
         const fallback_area = document.createElement("textarea");
         fallback_area.style.position = "fixed";
@@ -16,5 +13,5 @@ export async function clipboardCopyPlainText(str){
         fallback_area.setSelectionRange(0, fallback_area.value.length);
         document.execCommand("copy");
         document.body.removeChild(fallback_area);
-    }
+    })
 }
